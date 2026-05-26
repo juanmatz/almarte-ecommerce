@@ -1,0 +1,73 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { verifyJWT } from "./lib/auth";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // The Stripe webhook endpoint must be public
+  if (pathname === "/api/checkout/webhook") {
+    return NextResponse.next();
+  }
+
+  const isAdminRoute = pathname.startsWith("/api/admin");
+  const isCheckoutRoute = pathname.startsWith("/api/checkout");
+
+  if (isAdminRoute || isCheckoutRoute) {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Acceso no autorizado. Token faltante o formato incorrecto." },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(" ")[1];
+    const secret = process.env.JWT_SECRET;
+    
+    if (!token || !secret) {
+      return NextResponse.json(
+        { error: "Acceso no autorizado. Configuración de servidor incompleta." },
+        { status: 401 }
+      );
+    }
+
+    const payload = await verifyJWT(token, secret);
+    if (!payload) {
+      return NextResponse.json(
+        { error: "Acceso no autorizado. Token inválido o sesión expirada." },
+        { status: 401 }
+      );
+    }
+
+    // Role validation for admin routes
+    if (isAdminRoute && payload.role !== "admin") {
+      return NextResponse.json(
+        { error: "Acceso denegado. Se requieren privilegios de administrador." },
+        { status: 403 }
+      );
+    }
+    
+    // Inject user info in request headers so API routes can easily retrieve it
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", payload.id.toString());
+    requestHeaders.set("x-user-email", payload.email);
+    requestHeaders.set("x-user-role", payload.role);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  return NextResponse.next();
+}
+
+// Config to specify matching paths
+export const config = {
+  matcher: [
+    "/api/admin/:path*",
+    "/api/checkout/:path*",
+  ],
+};
