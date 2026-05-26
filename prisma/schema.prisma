@@ -1,0 +1,111 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  customer
+  admin
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  cancelled
+}
+
+enum ShipmentStatus {
+  pending
+  dispatched
+  in_transit
+  delivered
+  returned
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         Role     @default(customer)
+  createdAt    DateTime @default(now()) @map("created_at")
+  orders       Order[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  name          String      @db.VarChar(150)
+  description   String?     @db.Text
+  price         Decimal     @db.Decimal(10, 2)
+  discountPrice Decimal?    @map("discount_price") @db.Decimal(10, 2)
+  isAvailable   Boolean     @default(true) @map("is_available")
+  imageUrl      String      @map("image_url") @db.VarChar(255)
+  category      String      @db.VarChar(50)
+  subcategory   String?     @db.VarChar(50)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  orderItems    OrderItem[]
+  reviews       Review[]
+
+  @@map("products")
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int         @map("user_id")
+  total           Decimal     @db.Decimal(10, 2)
+  status          OrderStatus @default(pending)
+  paymentIntentId String?     @unique @map("payment_intent_id") @db.VarChar(255)
+  shippingAddress String      @map("shipping_address") @db.Text
+  createdAt       DateTime    @default(now()) @map("created_at")
+  user            User        @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+  shipment        Shipment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id              Int      @id @default(autoincrement())
+  orderId         Int      @map("order_id")
+  productId       Int      @map("product_id")
+  quantity        Int
+  priceAtPurchase Decimal  @map("price_at_purchase") @db.Decimal(10, 2)
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  productId Int      @map("product_id")
+  userId    Int?     @map("user_id")
+  rating    Int      @db.TinyInt
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("reviews")
+}
+
+model Shipment {
+  id                Int            @id @default(autoincrement())
+  orderId           Int            @unique @map("order_id")
+  carrier           String?        @db.VarChar(100)
+  trackingNumber    String?        @map("tracking_number") @db.VarChar(100)
+  status            ShipmentStatus @default(pending)
+  dispatchedAt      DateTime?      @map("dispatched_at")
+  estimatedDelivery DateTime?      @map("estimated_delivery") @db.Date
+  notes             String?        @db.Text
+  order             Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("shipments")
+}
