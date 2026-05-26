@@ -25,7 +25,7 @@ async function main() {
       price: 45000,
       isAvailable: true,
       imageUrl: "https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=600&auto=format&fit=crop",
-      category: "aromas",
+      category: "aromas-y-velas",
       subcategory: "Velas",
     },
     {
@@ -34,7 +34,7 @@ async function main() {
       price: 120000,
       isAvailable: true,
       imageUrl: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=600&auto=format&fit=crop",
-      category: "cuarzos",
+      category: "cuarzos-y-minerales",
       subcategory: "Cuarzos individuales",
     },
     {
@@ -44,7 +44,7 @@ async function main() {
       discountPrice: 49000,
       isAvailable: true,
       imageUrl: "https://images.unsplash.com/photo-1602928321679-560bb453f190?q=80&w=600&auto=format&fit=crop",
-      category: "rituales",
+      category: "rituales-y-bienestar",
       subcategory: "Sets de ritual",
     },
     {
@@ -62,7 +62,7 @@ async function main() {
       price: 65000,
       isAvailable: false, // Agotado
       imageUrl: "https://images.unsplash.com/photo-1596436889106-be35e843f974?q=80&w=600&auto=format&fit=crop",
-      category: "kits",
+      category: "kits-energeticos",
       subcategory: "Kits combinados",
     },
   ];

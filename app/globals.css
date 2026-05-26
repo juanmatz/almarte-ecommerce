@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F5F0E8; /* Crema Cálido */
-  --foreground: #2C2C2C; /* Carbón */
+  --background: #F5F0E8; /* Crema Cálido — fondo de páginas */
+  --foreground: #2B2D29; /* Carbón Oliva — cuerpo de texto premium */
   
-  --bg-secondary: #FAF7F2; /* Marfil Suave */
-  --surface: #E8DFD0; /* Arena Natural */
-  --primary: #9B7E5A; /* Tierra Dorada */
-  --primary-hover: #C4A882; /* Camel Claro */
-  --text-secondary: #6B6B6B; /* Gris Piedra */
-  --title: #5C3D1E; /* Café Oscuro */
-  --divider: #D4C9B8; /* Gris Beige */
+  --bg-secondary: #FAF7F2; /* Marfil Suave — tarjetas, modales */
+  --surface: #E8DFD0; /* Arena Natural — headers, chips, separadores */
+  --primary: #C6764B; /* Terracota Sol — CTAs principales, destacados */
+  --primary-hover: #DB9773; /* Terracota Suave — hover, badges de descuento */
+  --text-secondary: #6E736A; /* Gris Musgo — metadatos, precios tachados */
+  --title: #43503C; /* Verde Olivo Profundo — H1, H2, logo, títulos */
+  --divider: #D4C9B8; /* Gris Beige — bordes y líneas divisorias */
   --white: #FFFFFF; /* Blanco Puro */
 }
 

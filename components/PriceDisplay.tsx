@@ -12,10 +12,10 @@ export default function PriceDisplay({ price, discountPrice, className = "" }: P
   };
 
   return (
-    <div className={`flex items-baseline gap-x-2 font-sans ${className}`}>
+    <div className={`flex items-baseline gap-x-1.5 font-sans ${className}`}>
       {discountPrice ? (
         <>
-          <span className="text-base font-bold text-foreground">
+          <span className="text-base font-bold text-primary">
             {formatPrice(discountPrice)}
           </span>
           <span className="text-xs text-text-secondary line-through">
@@ -23,7 +23,7 @@ export default function PriceDisplay({ price, discountPrice, className = "" }: P
           </span>
         </>
       ) : (
-        <span className="text-base font-bold text-foreground">
+        <span className="text-base font-bold text-primary">
           {formatPrice(price)}
         </span>
       )}
