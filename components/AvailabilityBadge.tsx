@@ -13,7 +13,7 @@ export default function AvailabilityBadge({
 }: AvailabilityBadgeProps) {
   if (!isAvailable) {
     return (
-      <span className="inline-flex items-center rounded-md bg-stone-200 px-2 py-1 text-xs font-semibold text-stone-700">
+      <span className="inline-flex items-center rounded-md bg-divider px-2.5 py-1 text-xs font-semibold text-text-secondary">
         Agotado
       </span>
     );
@@ -22,14 +22,14 @@ export default function AvailabilityBadge({
   if (discountPrice && discountPrice < price) {
     const discountPercent = Math.round(((price - discountPrice) / price) * 100);
     return (
-      <span className="inline-flex items-center rounded-md bg-primary-hover/20 px-2 py-1 text-xs font-semibold text-primary">
+      <span className="inline-flex items-center rounded-md bg-primary-hover/20 px-2.5 py-1 text-xs font-semibold text-primary">
         -{discountPercent}%
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-semibold text-green-700 border border-green-200">
+    <span className="inline-flex items-center rounded-md bg-surface/30 px-2.5 py-1 text-xs font-semibold text-title border border-divider/40">
       Disponible
     </span>
   );
