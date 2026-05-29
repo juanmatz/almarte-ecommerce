@@ -26,11 +26,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link
-      href={`/product/${product.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-lg border border-divider/40 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      href={`/producto/${product.id}`}
+      className="group relative flex flex-col overflow-hidden rounded-lg border border-divider bg-bg-secondary transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md shadow-xs"
     >
       {/* Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-bg-secondary">
+      <div className="relative aspect-square w-full overflow-hidden bg-surface/20">
         <Image
           src={product.image_url}
           alt={product.name}
@@ -40,7 +40,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         />
 
         {/* Badges Overlay */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-y-1">
+        <div className="absolute top-3 left-3 z-10 flex flex-col gap-y-1">
           <AvailabilityBadge
             isAvailable={product.is_available}
             price={product.price}
@@ -50,25 +50,25 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Details */}
-      <div className="flex flex-1 flex-col justify-between pt-4">
+      <div className="flex flex-1 flex-col justify-between p-3.5 pt-3">
         <div className="space-y-1.5">
           {/* Subcategory */}
           {product.subcategory && (
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
               {product.subcategory}
             </span>
           )}
 
           {/* Name */}
-          <h3 className="font-serif text-base font-bold text-title line-clamp-1 group-hover:text-primary transition duration-150">
+          <h3 className="font-serif text-sm font-bold text-title line-clamp-1 group-hover:text-primary transition duration-150">
             {product.name}
           </h3>
 
           {/* Ratings */}
           {product.rating !== undefined && (
-            <div className="flex items-center gap-x-2">
-              <StarRating rating={product.rating} size={13} />
-              <span className="text-xs text-text-secondary">
+            <div className="flex items-center gap-x-1.5">
+              <StarRating rating={product.rating} size={12} />
+              <span className="text-[11px] text-text-secondary font-medium">
                 ({product.reviewCount})
               </span>
             </div>
@@ -76,7 +76,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Price & Add to Cart button */}
-        <div className="mt-4 flex items-center justify-between pt-2 border-t border-divider/20">
+        <div className="mt-3.5 flex items-center justify-between pt-2.5 border-t border-divider/40">
           <PriceDisplay
             price={product.price}
             discountPrice={product.discount_price}
@@ -87,8 +87,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             disabled={!product.is_available}
             className={`p-2 rounded-full transition duration-200 ${
               product.is_available
-                ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95"
-                : "bg-stone-100 text-stone-400 cursor-not-allowed"
+                ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95 cursor-pointer"
+                : "bg-divider text-text-secondary cursor-not-allowed"
             }`}
             aria-label={product.is_available ? "Agregar al carrito" : "Agotado"}
           >

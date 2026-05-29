@@ -118,16 +118,18 @@ La estructura de datos se modela bajo el principio de consistencia e integridad 
 ### 3.1. Diccionario de Tablas
 
 #### Tabla: `users`
-Almacena las credenciales y datos de perfil de los clientes registrados.
+Almacena las credenciales, perfiles de clientes (registrados o invitados) y administradores.
 
 | Campo | Tipo | Restricciones | Descripción |
 |---|---|---|---|
 | `id` | INT | PK, AUTO_INCREMENT | Identificador único del usuario |
 | `name` | VARCHAR(100) | NOT NULL | Nombre completo |
 | `email` | VARCHAR(150) | NOT NULL, UNIQUE | Correo para login y notificaciones |
-| `password_hash` | VARCHAR(255) | NOT NULL | Contraseña encriptada (Argon2/bcrypt) |
+| `password_hash` | VARCHAR(255) | NULL | Contraseña encriptada (Argon2/bcrypt). Puede ser `NULL` si el usuario compra como invitado |
+| `document_id` | VARCHAR(20) | NULL | Número de identificación (Cédula o NIT) del cliente |
+| `is_guest` | TINYINT(1) | NOT NULL, DEFAULT 0 | Indica si el usuario es invitado (`1`) o registrado (`0`) |
 | `role` | ENUM | `'customer'`, `'admin'` | Rol del usuario en el sistema |
-| `created_at` | TIMESTAMP | DEFAULT NOW() | Fecha de registro |
+| `created_at` | TIMESTAMP | DEFAULT NOW() | Fecha de registro / alta |
 
 #### Tabla: `products`
 Catálogo de todos los artículos disponibles en la tienda.
@@ -282,37 +284,40 @@ El backend expone una interfaz estructurada bajo el estándar REST. Todas las re
 
 ### Paso 1 — Selección y Carrito
 - El cliente navega el catálogo y agrega productos al carrito.
-- El carrito se persiste en `LocalStorage` del navegador. No hay comunicación con el servidor en esta etapa.
+- El carrito se persiste en `LocalStorage` del navegador.
 - Se muestran precio regular o precio con descuento según el campo `discount_price` del producto.
-- Los productos con `is_available = 0` muestran el badge **«Agotado»** y no pueden agregarse al carrito.
+- Los productos agotados muestran el badge **«Agotado»** y no se pueden agregar al carrito.
 
-### Paso 2 — Inicio del Checkout
-- El cliente hace clic en «Finalizar compra» e inicia sesión si aún no lo ha hecho.
-- Ingresa la dirección de envío: ciudad, dirección y teléfono.
+### Paso 2 — Identificación en el Checkout (Opcional de Cuentas)
+Al iniciar el checkout, el sistema ofrece dos alternativas claras:
+1.  **Compra con Cuenta Existente:** El cliente inicia sesión. Sus datos básicos (nombre, correo, identificación, dirección) se autocompletan en el formulario.
+2.  **Compra como Invitado:** El cliente continúa directamente sin iniciar sesión. Se le solicitan únicamente los siguientes datos esenciales:
+    *   Correo Electrónico (para notificaciones y seguimiento).
+    *   Número de Identificación (Cédula de Ciudadanía o NIT, requerido para facturación y guías de envío nacionales).
+    *   Nombre Completo.
+    *   Teléfono Celular de contacto.
+    *   Dirección y Ciudad de entrega.
 
-### Paso 3 — Creación del PaymentIntent
-- El frontend envía los ítems del `LocalStorage` + dirección al endpoint `POST /api/checkout/create-intent`.
-- El backend valida que todos los productos existan, estén disponibles y consulta los precios reales en MySQL (nunca confía en el precio enviado por el cliente).
-- Se crea la orden en estado `pending` en la base de datos.
-- Se crea el `PaymentIntent` en Stripe con el monto calculado en el servidor.
-- El backend retorna el `client_secret` al frontend.
+### Paso 3 — Procesamiento del Pedido y Creación del Usuario Invitado
+- El frontend envía el carrito de compras junto con los datos del cliente al backend (`POST /api/checkout/guest-intent`).
+- El backend valida el inventario de los productos y sus precios vigentes en la base de datos (nunca confía en el precio del frontend).
+- **Lógica de Usuario Híbrido:**
+    *   Si el correo ingresado no existe en la base de datos, el sistema crea un nuevo registro `User` marcado con `is_guest = true` y `password_hash = null`.
+    *   Si el correo ya existe como invitado, se actualizan sus datos básicos si cambiaron.
+    *   Si el correo ya pertenece a un cliente registrado, la compra se asocia a su ID de usuario para trazabilidad sin obligarlo a iniciar sesión.
+- Se genera el registro de la compra (`Order`) en estado `pending` asociada a dicho usuario.
+- Se crea el registro logístico (`Shipment`) en estado `pending` enlazado a la orden.
 
-### Paso 4 — Pago
-- El frontend monta el formulario nativo de Stripe (Stripe Elements) usando el `client_secret`.
-- El cliente ingresa sus datos de tarjeta, o usa Apple Pay / Google Pay si el dispositivo lo soporta.
-- Stripe procesa el pago de forma segura. En ningún momento el servidor de Almarte toca los datos de la tarjeta.
+### Paso 4 — Pago o Acuerdo de Compra
+- En la versión actual, al postergar la pasarela de pagos automática (Stripe), la orden se registra en base de datos.
+- El cliente recibe instrucciones en pantalla (ej: transferencia bancaria, pago contra entrega o acuerdo con el vendedor).
+- La administradora puede cambiar el estado de pago de la orden manualmente a `paid` desde el Panel de Administración una vez confirmado el ingreso del dinero.
 
-### Paso 5 — Confirmación Asíncrona (Webhook)
-- Stripe llama al endpoint `POST /api/checkout/webhook` con el evento `payment_intent.succeeded`.
-- El backend verifica la firma del webhook con la clave secreta de Stripe para prevenir falsificaciones.
-- Se actualiza el estado de la orden a `paid`.
-- Se dispara el envío del correo de confirmación al cliente con detalle de la compra.
-
-### Paso 6 — Post-Compra
-- El cliente es redirigido a la página de confirmación con el número de su orden.
-- La administradora recibe una notificación (email) con los detalles de la nueva orden.
-- Desde el panel de administración se gestiona el despacho y se registra el número de guía.
-- El cliente puede consultar el estado de su envío desde su perfil en la tienda.
+### Paso 5 — Post-Compra & Despacho
+- El cliente ve la confirmación en pantalla con su número de orden.
+- Si el cliente desea registrarse en ese momento, puede asignar una contraseña; el sistema actualizará su usuario (`is_guest = false`, guardando el `password_hash`), permitiéndole acceder en adelante a su historial de compras en `/cuenta`.
+- La administradora gestiona el despacho en `/admin/ordenes`, asigna la transportadora y número de guía, y actualiza el estado del envío.
+- El cliente puede consultar el estado de su envío desde su perfil en `/cuenta` si tiene su cuenta activada.
 
 ---
 
