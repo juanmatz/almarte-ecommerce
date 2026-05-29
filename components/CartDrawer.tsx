@@ -184,7 +184,7 @@ export default function CartDrawer() {
             </p>
             <div className="pt-2">
               <Link
-                href="/checkout/carrito"
+                href="/checkout"
                 onClick={closeCart}
                 className="flex w-full items-center justify-center gap-x-2 rounded-md bg-primary py-3 text-sm font-medium text-white shadow-xs transition hover:bg-primary-hover duration-200"
               >

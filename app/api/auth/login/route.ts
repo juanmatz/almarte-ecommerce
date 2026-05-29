@@ -28,6 +28,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: "Esta cuenta es de invitado. Por favor, regístrate o activa tu cuenta primero." },
+        { status: 401 }
+      );
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 

@@ -7,6 +7,8 @@ export interface User {
   name: string;
   email: string;
   role: "customer" | "admin";
+  documentId?: string;
+  isGuest: boolean;
 }
 
 interface AuthContextType {

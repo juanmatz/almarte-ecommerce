@@ -36,25 +36,41 @@ export async function POST(request: Request) {
       where: { email: email.toLowerCase() },
     });
 
+    let user;
+
     if (existingUser) {
-      return NextResponse.json(
-        { error: "El correo electrónico ya está registrado" },
-        { status: 400 }
-      );
+      if (existingUser.isGuest) {
+        // Convert guest user to regular user
+        const passwordHash = await bcrypt.hash(password, 10);
+        user = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name,
+            passwordHash,
+            isGuest: false,
+          },
+        });
+      } else {
+        return NextResponse.json(
+          { error: "El correo electrónico ya está registrado" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // Create new user in database
+      user = await prisma.user.create({
+        data: {
+          name,
+          email: email.toLowerCase(),
+          passwordHash,
+          role: "customer", // Default role
+          isGuest: false,
+        },
+      });
     }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create user in database
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        passwordHash,
-        role: "customer", // Default role
-      },
-    });
 
     // Generate JWT token
     const token = jwt.sign(
