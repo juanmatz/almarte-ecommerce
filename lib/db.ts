@@ -27,6 +27,7 @@ if (process.env.NODE_ENV === "production") {
   const adapter = new PrismaMariaDb({
     ...config,
     connectionLimit: 15, // Hostinger Business connection pool limit
+    allowPublicKeyRetrieval: true,
   });
   prisma = new PrismaClient({ adapter });
 } else {
@@ -35,6 +36,7 @@ if (process.env.NODE_ENV === "production") {
     const adapter = new PrismaMariaDb({
       ...config,
       connectionLimit: 5,
+      allowPublicKeyRetrieval: true,
     });
     globalForPrisma.prisma = new PrismaClient({ adapter });
   }
