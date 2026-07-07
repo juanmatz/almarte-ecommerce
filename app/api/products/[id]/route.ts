@@ -115,6 +115,41 @@ export async function POST(
       );
     }
 
+    // 1. Check if the user has already reviewed this product
+    const existingReview = await prisma.review.findFirst({
+      where: {
+        productId,
+        userId: userPayload.id,
+      },
+    });
+
+    if (existingReview) {
+      return NextResponse.json(
+        { error: "Ya has dejado una valoración para este producto." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check if the user has purchased the product (order is paid/shipped and contains the product)
+    const hasPurchased = await prisma.order.findFirst({
+      where: {
+        userId: userPayload.id,
+        status: { in: ["paid", "shipped"] },
+        orderItems: {
+          some: {
+            productId: productId,
+          },
+        },
+      },
+    });
+
+    if (!hasPurchased) {
+      return NextResponse.json(
+        { error: "Solo puedes calificar productos que hayas comprado y pagado en esta tienda." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { rating, comment } = body;
 

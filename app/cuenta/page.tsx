@@ -188,12 +188,12 @@ export default function CuentaPage() {
                       <div className="space-y-3 mb-4">
                         {order.items.map((item: any) => (
                           <div key={item.id} className="flex items-center justify-between text-xs py-1">
-                            <div className="flex items-center gap-3">
+                            <Link href={`/producto/${item.productId}`} className="flex items-center gap-3 group hover:opacity-85 transition">
                               {item.productImageUrl ? (
                                 <img
                                   src={item.productImageUrl}
                                   alt={item.productName}
-                                  className="h-10 w-10 rounded object-cover border border-divider/30 shrink-0"
+                                  className="h-10 w-10 rounded object-cover border border-divider/30 shrink-0 group-hover:border-primary transition"
                                 />
                               ) : (
                                 <div className="h-10 w-10 rounded bg-surface flex items-center justify-center text-text-secondary border border-divider/30 shrink-0">
@@ -201,12 +201,12 @@ export default function CuentaPage() {
                                 </div>
                               )}
                               <div>
-                                <p className="font-semibold text-foreground leading-snug">{item.productName}</p>
+                                <p className="font-semibold text-foreground leading-snug group-hover:text-primary transition">{item.productName}</p>
                                 <p className="text-[10px] text-text-secondary mt-0.5">
                                   Cantidad: {item.quantity} × {formatCurrency(item.priceAtPurchase)}
                                 </p>
                               </div>
-                            </div>
+                            </Link>
                             <p className="font-semibold text-title">{formatCurrency(item.priceAtPurchase * item.quantity)}</p>
                           </div>
                         ))}
