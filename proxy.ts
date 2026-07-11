@@ -5,8 +5,8 @@ import { verifyJWT } from "./lib/auth";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The Stripe webhook endpoint must be public
-  if (pathname === "/api/checkout/webhook") {
+  // The Stripe webhook and guest checkout endpoints must be public
+  if (pathname === "/api/checkout/webhook" || pathname === "/api/checkout/guest-intent") {
     return NextResponse.next();
   }
 

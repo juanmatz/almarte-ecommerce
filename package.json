@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0",
+    "dev": "next dev --webpack --hostname 0.0.0.0",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
@@ -12,6 +12,7 @@
     "@prisma/adapter-mariadb": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.16.0",
     "mariadb": "^3.5.2",

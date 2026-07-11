@@ -70,13 +70,11 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full z-40 sticky top-0 flex flex-col">
+    <div className={`w-full z-40 sticky transition-all duration-300 flex flex-col ${isCompact ? "-top-9" : "top-0"}`}>
       {/* Announcement Bar */}
-      {!isCompact && (
-        <div className="w-full h-9 bg-title flex items-center justify-center text-xs font-medium text-white tracking-wider px-4 transition-all duration-300">
-          Envíos a todo Colombia · Pago seguro con Stripe
-        </div>
-      )}
+      <div className="w-full h-9 bg-title flex items-center justify-center text-xs font-medium text-white tracking-wider px-4 transition-all duration-300">
+        Envíos a todo Colombia · Pago seguro
+      </div>
 
       {/* Main Header */}
       <header className="w-full bg-bg-secondary border-b border-divider/60 transition-all duration-300 shadow-xs">

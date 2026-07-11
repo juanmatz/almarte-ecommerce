@@ -27,9 +27,8 @@
 
 ### 1.2. Objetivos del Sistema
 
-- Proporcionar un catálogo digital interactivo y optimizado para la exposición de piezas artesanales únicas.
 - Garantizar una gestión de estado de productos en tiempo real (disponible, agotado, en descuento) que evite la sobreventa.
-- Implementar un flujo de pago seguro e integrado nativamente con Stripe (tarjetas de crédito/débito y wallets digitales como Apple Pay y Google Pay).
+- Implementar un flujo de pago seguro (pasarela de pagos pendiente por definir).
 - Ofrecer un panel de administración privado para gestión de productos, órdenes y envíos.
 - Maximizar el rendimiento y la eficiencia bajo un entorno de hosting compartido optimizado (Hostinger Business).
 - Construir una base técnica extensible para futuras integraciones de notificaciones (email/WhatsApp).
@@ -71,9 +70,9 @@ El sistema adopta una **arquitectura desacoplada (API-First)**. Esta separación
         ↓                    ↓                   ↓
 +---------------+   +------------------+   +---------------+
 | CAPA DE DATOS |   | PASARELA DE PAGO |   | CDN IMÁGENES  |
-| [ MySQL ]     |   | [ Stripe ]       |   | [ Cloudinary] |
-| Base de datos |   | Tarjetas, Apple  |   | Fotografías   |
-| relacional    |   | Pay, Google Pay  |   | de productos  |
+| [ MySQL ]     |   | [ Por definir ]  |   | [ Cloudinary] |
+| Base de datos |   | Integración de   |   | Fotografías   |
+| relacional    |   | pagos pendiente  |   | de productos  |
 +---------------+   +------------------+   +---------------+
 ```
 
@@ -90,14 +89,14 @@ Compilado en archivos estáticos (HTML, CSS, JS) y servido desde el directorio p
 Ejecutado en una de las ranuras de aplicaciones Node.js del plan de hosting. Responsable de:
 - Validación de reglas de negocio y autenticación JWT.
 - Comunicación con MySQL mediante un pool de conexiones controlado.
-- Integración con Stripe para creación de Payment Intents y procesamiento de webhooks.
+- Integración de pasarela de pagos (pendiente por definir) y procesamiento de compras.
 - Envío de notificaciones por correo electrónico (y futuro canal WhatsApp).
 
 #### Base de Datos (MySQL)
 Motor relacional nativo alojado en Hostinger. Encargado de la persistencia de usuarios, productos, órdenes, reseñas e historial de envíos.
 
 #### CDN de Imágenes (Cloudinary)
-Las imágenes de todos los productos se almacenan externamente en Cloudinary. La base de datos solo guarda la URL del recurso, mitigando el límite de inodos del hosting compartido y garantizando tiempos de carga óptimos.
+Las imágenes de todos los productos se almacenan externamente en Cloudinary. La base de datos solo guarda la URL del recurso, mitigando el límite de inodos del hosting compartido y garantizando tiempos de carga óptimos. En el panel de administración, la carga es automatizada: el cliente arrastra la imagen y el servidor la procesa mediante un proxy seguro, renombrándola automáticamente bajo una convención SEO antes de subirla a la carpeta `almarte/productos`.
 
 ### 2.3. Decisiones de Infraestructura
 
@@ -158,7 +157,7 @@ Cabecera de cada transacción comercial realizada.
 | `user_id` | INT | FK → `users(id)` | Cliente que realiza la compra |
 | `total` | DECIMAL(10,2) | NOT NULL | Monto total final pagado |
 | `status` | ENUM | `pending/paid/shipped/cancelled` | Estado actual de la transacción |
-| `payment_intent_id` | VARCHAR(255) | UNIQUE, NULL | ID de transacción de Stripe |
+| `payment_intent_id` | VARCHAR(255) | UNIQUE, NULL | ID de transacción del pago (pasarela por definir) |
 | `shipping_address` | TEXT | NULL | Dirección de entrega en formato JSON |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Fecha y hora de la compra |
 
@@ -230,34 +229,14 @@ El backend expone una interfaz estructurada bajo el estándar REST. Todas las re
 | `/api/products/:id/reviews` | GET | Lista de reseñas y rating promedio de un producto. |
 | `/api/products/:id/reviews` | POST *(auth)* | Publica una reseña. Solo permitido a clientes con al menos una orden del producto en estado `paid`. |
 
-### 4.3. Módulo de Checkout y Pagos (Stripe)
+### 4.3. Módulo de Checkout y Pagos (Pasarela por definir)
 
 | Endpoint | Método | Descripción |
 |---|---|---|
-| `/api/checkout/create-intent` | POST *(auth)* | Recibe el carrito del `LocalStorage`, valida precios reales contra MySQL, y crea un `PaymentIntent` en Stripe. Retorna el `client_secret`. |
-| `/api/checkout/webhook` | POST *(público)* | Escucha notificaciones asíncronas de Stripe. Al recibir `payment_intent.succeeded`, marca la orden como `paid`. |
+| `/api/checkout/create-intent` | POST *(auth)* | (Pendiente por definir) Recibe el carrito de compras, valida precios reales contra MySQL, y crea la transacción en la pasarela de pagos seleccionada. |
+| `/api/checkout/webhook` | POST *(público)* | (Pendiente por definir) Escucha notificaciones asíncronas de la pasarela de pagos para actualizar el estado de la orden a `paid`. |
 
-**Payload esperado en `/api/checkout/create-intent`:**
-
-```json
-{
-  "items": [
-    { "product_id": 12, "quantity": 1 },
-    { "product_id": 5,  "quantity": 2 }
-  ],
-  "shipping_address": {
-    "city": "Medellín",
-    "address": "Calle 10 # 43-20",
-    "phone": "3001234567"
-  }
-}
-```
-
-**Respuesta:**
-```json
-{ "client_secret": "pi_xxx_secret_xxx" }
-```
-> El frontend usa este `client_secret` para renderizar el formulario nativo de Stripe, habilitando Apple Pay, Google Pay y tarjetas automáticamente.
+**Nota de diseño:** La integración de la pasarela de pagos automática (como Stripe, Wompi, Bold, etc.) queda pendiente por definir. En la versión actual, el flujo de compra procesa y registra la orden en la base de datos en estado `pending`, y el usuario recibe instrucciones para el pago manual o acuerdo directo.
 
 ### 4.4. Módulo de Envíos
 
@@ -277,6 +256,7 @@ El backend expone una interfaz estructurada bajo el estándar REST. Todas las re
 | `/api/admin/products/:id` | DELETE *(admin)* | Elimina un producto (soft delete para preservar historial de órdenes). |
 | `/api/admin/orders` | GET *(admin)* | Lista todas las órdenes con filtros por estado y rango de fechas. |
 | `/api/admin/orders/:id` | PATCH *(admin)* | Actualiza el estado de una orden manualmente (ej. a `shipped` o `cancelled`). |
+| `/api/admin/upload` | POST *(admin)* | Sube un archivo de imagen al servidor, lo procesa y lo sube directamente a Cloudinary, retornando la URL segura. |
 
 ---
 
@@ -309,7 +289,7 @@ Al iniciar el checkout, el sistema ofrece dos alternativas claras:
 - Se crea el registro logístico (`Shipment`) en estado `pending` enlazado a la orden.
 
 ### Paso 4 — Pago o Acuerdo de Compra
-- En la versión actual, al postergar la pasarela de pagos automática (Stripe), la orden se registra en base de datos.
+- En la versión actual, al estar pendiente la integración de la pasarela de pagos automática, la orden se registra en la base de datos.
 - El cliente recibe instrucciones en pantalla (ej: transferencia bancaria, pago contra entrega o acuerdo con el vendedor).
 - La administradora puede cambiar el estado de pago de la orden manualmente a `paid` desde el Panel de Administración una vez confirmado el ingreso del dinero.
 
@@ -413,8 +393,8 @@ La identidad visual de Almarte Artesanos refleja la naturaleza orgánica, artesa
 - Sección de reseñas con rating promedio y lista de comentarios verificados.
 
 #### Checkout
-- Vista limpia de 3 pasos: Carrito → Dirección de envío → Pago.
-- Formulario de pago nativo de Stripe (Stripe Elements).
+- Vista limpia de 3 pasos: Carrito → Dirección de envío → Pago/Confirmación.
+- Formulario de pago o confirmación de pedido (pasarela automática pendiente por definir).
 - Resumen de orden persistente en el lateral durante todo el proceso.
 
 #### Panel de Administración
@@ -471,15 +451,15 @@ almarte-artesanos/
 ## 10. Lista de Verificación para el Despliegue
 
 ### 10.1. Configuración del Servidor
-- [ ] Variables de entorno (`.env`): `DB_*`, `JWT_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CLOUDINARY_URL`.
-- [ ] CORS configurado explícitamente en Express para el dominio del frontend.
-- [ ] Certificado SSL/HTTPS activo (obligatorio para Stripe y wallets móviles).
-- [ ] Webhook de Stripe apuntando al endpoint `/api/checkout/webhook` del dominio de producción.
+- [ ] Variables de entorno (`.env`): `DATABASE_URL`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (y variables de la pasarela de pagos cuando se defina).
+- [ ] CORS configurado explícitamente en Express/Next.js para el dominio del frontend.
+- [ ] Certificado SSL/HTTPS activo (obligatorio para pasarelas de pago y seguridad general).
+- [ ] Configuración de Webhook/APIs de la pasarela de pagos en el entorno de producción (cuando se defina).
 
 ### 10.2. Frontend
-- [ ] `npm run build` ejecutado en el directorio de React antes de subir a `public_html`.
-- [ ] Variable de entorno `VITE_API_URL` apuntando al backend de producción.
-- [ ] Stripe Publishable Key en modo live (reemplazar key de test).
+- [ ] `npm run build` ejecutado antes del despliegue.
+- [ ] Variable de entorno para URL de producción.
+- [ ] Credenciales de la pasarela de pagos en producción (cuando se defina).
 
 ### 10.3. Base de Datos
 - [ ] Migraciones ejecutadas en MySQL de producción con todas las tablas y relaciones.
@@ -487,7 +467,7 @@ almarte-artesanos/
 - [ ] Connection Pool con límite máximo de 15 conexiones configurado.
 
 ### 10.4. Pruebas Pre-Lanzamiento
-- [ ] Prueba de compra completa con tarjeta de test de Stripe (`4242 4242 4242 4242`).
+- [ ] Prueba de flujo de compra completo en modo de prueba / manual.
 - [ ] Verificar llegada de correo de confirmación al cliente tras orden pagada.
 - [ ] Verificar notificación a la administradora por nueva orden.
 - [ ] Probar flujo de despacho desde el panel de administración.
