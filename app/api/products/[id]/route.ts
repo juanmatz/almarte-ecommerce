@@ -62,6 +62,7 @@ export async function GET(
       reviewCount,
       reviews: product.reviews.map((r) => ({
         id: r.id,
+        userId: r.userId,
         rating: r.rating,
         comment: r.comment,
         createdAt: r.createdAt.toISOString(),
@@ -181,6 +182,7 @@ export async function POST(
     // Return the formatted review for the frontend
     const formattedReview = {
       id: review.id,
+      userId: review.userId,
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt.toISOString(),
