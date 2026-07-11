@@ -88,6 +88,7 @@ export default async function ProductPage(props: {
     reviewCount,
     reviews: product.reviews.map((r) => ({
       id: r.id,
+      userId: r.userId,
       rating: r.rating,
       comment: r.comment,
       createdAt: r.createdAt.toISOString(),

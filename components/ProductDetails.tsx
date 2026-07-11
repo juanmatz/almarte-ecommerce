@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingBag, ChevronRight, Star, Heart, Share2, Sparkles, Shield, RefreshCw } from "lucide-react";
+import { ShoppingBag, ChevronRight, Star, Heart, Share2, Sparkles, Shield, RefreshCw, Trash2 } from "lucide-react";
 import { useCart, Product } from "@/context/CartContext";
 import PriceDisplay from "./PriceDisplay";
 import StarRating from "./StarRating";
@@ -11,6 +11,7 @@ import AvailabilityBadge from "./AvailabilityBadge";
 
 interface Review {
   id: number;
+  userId: number | null;
   rating: number;
   comment: string | null;
   createdAt: string;
@@ -46,6 +47,7 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [isDeletingMap, setIsDeletingMap] = useState<Record<number, boolean>>({});
 
   // Load auth state from localStorage
   useEffect(() => {
@@ -120,6 +122,53 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
       setReviewError(err.message || "Ocurrió un error inesperado al enviar tu valoración.");
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta valoración?")) return;
+    
+    setReviewError("");
+    setReviewSuccess(false);
+    setIsDeletingMap(prev => ({ ...prev, [reviewId]: true }));
+
+    try {
+      const activeToken = token || localStorage.getItem("almarte_token");
+      if (!activeToken) {
+        throw new Error("Debes iniciar sesión para realizar esta acción.");
+      }
+
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${activeToken}`,
+        },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al eliminar la reseña");
+      }
+
+      // Update state: filter out the deleted review and recalculate average
+      const updatedReviews = product.reviews.filter((r) => r.id !== reviewId);
+      const newReviewCount = updatedReviews.length;
+      // Default to 4.8 if no reviews remaining, same as default mock layout
+      const newRating = newReviewCount > 0
+        ? updatedReviews.reduce((acc, r) => acc + r.rating, 0) / newReviewCount
+        : 4.8;
+
+      setProduct({
+        ...product,
+        reviews: updatedReviews,
+        reviewCount: newReviewCount,
+        rating: parseFloat(newRating.toFixed(1)),
+      });
+      
+    } catch (err: any) {
+      setReviewError(err.message || "Ocurrió un error inesperado al eliminar la valoración.");
+    } finally {
+      setIsDeletingMap(prev => ({ ...prev, [reviewId]: false }));
     }
   };
 
@@ -600,14 +649,27 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
                     </div>
                   </div>
                   
-                  {/* Review Date */}
-                  <span className="text-[10px] font-semibold text-text-secondary">
-                    {new Date(review.createdAt).toLocaleDateString("es-CO", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
+                  {/* Review Date & Action */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-semibold text-text-secondary">
+                      {new Date(review.createdAt).toLocaleDateString("es-CO", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </span>
+                    {currentUser && (currentUser.id === review.userId || currentUser.role === "admin") && (
+                      <button
+                        onClick={() => handleDeleteReview(review.id)}
+                        disabled={isDeletingMap[review.id]}
+                        className="text-rose-600 hover:text-rose-800 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition select-none ml-2 border border-rose-200/40 rounded px-1.5 py-0.5 bg-rose-50/20 hover:bg-rose-50 disabled:opacity-40"
+                        title="Eliminar valoración"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {isDeletingMap[review.id] ? "Eliminando..." : "Eliminar"}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-xs text-foreground/90 leading-relaxed pl-11">
