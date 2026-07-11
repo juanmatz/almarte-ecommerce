@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X, Loader2, Sparkles } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X, Loader2, Sparkles, UploadCloud } from "lucide-react";
 import Image from "next/image";
 
 interface Product {
@@ -49,6 +49,104 @@ export default function AdminProductosPage() {
   const [formIsAvailable, setFormIsAvailable] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Cloudinary direct upload states
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      showNotification("El archivo seleccionado no es una imagen válida.", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("La imagen excede el tamaño máximo permitido de 5MB.", "error");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    if (formName) {
+      formData.append("productName", formName);
+    }
+
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al subir la imagen a Cloudinary.");
+      }
+
+      setFormImageUrl(data.imageUrl);
+      showNotification("Imagen cargada exitosamente.", "success");
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.message || "Error al subir la imagen.");
+      showNotification(err.message || "Error al subir la imagen.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      handleFileUpload(file);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      handleFileUpload(file);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const urlToDelete = formImageUrl;
+    setFormImageUrl(""); // Visual reset
+    setUploadError(null);
+
+    if (urlToDelete && urlToDelete.includes("cloudinary.com")) {
+      try {
+        await fetch("/api/admin/upload", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ imageUrl: urlToDelete }),
+        });
+        showNotification("Imagen anterior retirada del servidor de Cloudinary.", "info");
+      } catch (err) {
+        console.error("Error al intentar eliminar recurso en Cloudinary:", err);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -79,7 +177,7 @@ export default function AdminProductosPage() {
     setFormDescription("");
     setFormPrice("");
     setFormDiscountPrice("");
-    setFormImageUrl("https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop");
+    setFormImageUrl("");
     setFormCategory("accesorios");
     setFormSubcategory("Collares");
     setFormIsAvailable(true);
@@ -513,19 +611,77 @@ export default function AdminProductosPage() {
                     />
                   </div>
 
-                  {/* Image URL field */}
-                  <div className="space-y-1 sm:col-span-2">
+                  {/* Image Drag & Drop Upload field */}
+                  <div className="space-y-1.5 sm:col-span-2">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
-                      URL de Imagen (Cloudinary / Unsplash)
+                      Fotografía del Producto (Cloudinary)
                     </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="URL de la fotografía del producto"
-                      value={formImageUrl}
-                      onChange={(e) => setFormImageUrl(e.target.value)}
-                      className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
-                    />
+                    
+                    {formImageUrl ? (
+                      <div className="relative h-48 w-full rounded-lg overflow-hidden border border-divider bg-stone-50 flex items-center justify-center group/preview">
+                        <Image
+                          src={formImageUrl}
+                          alt="Previsualización del producto"
+                          fill
+                          className="object-contain"
+                          sizes="(max-width: 768px) 100vw, 600px"
+                        />
+                        <div className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="bg-rose-600 text-white rounded-md px-3 py-2 text-xs font-semibold hover:bg-rose-700 transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Quitar Imagen
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`relative h-44 rounded-lg border-2 border-dashed flex flex-col items-center justify-center p-4 transition-all duration-200 ${
+                          isDragging
+                            ? "border-primary bg-primary/5 scale-[0.99]"
+                            : "border-divider hover:border-primary/50 hover:bg-stone-50/50"
+                        }`}
+                      >
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-2 text-center animate-pulse">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <span className="text-xs font-semibold text-text-primary">Subiendo a Cloudinary...</span>
+                            <span className="text-[10px] text-text-secondary">Por favor, espera un momento.</span>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center gap-2.5 text-center cursor-pointer w-full h-full justify-center">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+                            <div className="p-2.5 bg-stone-100 rounded-full text-text-secondary group-hover:bg-primary/10 transition">
+                              <UploadCloud className="h-6 w-6 text-primary/80" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-text-primary block">
+                                Arrastra tu imagen aquí o haz clic para buscar
+                              </span>
+                              <span className="text-[10px] text-text-secondary mt-1 block">
+                                Soporta JPG, PNG, WEBP de hasta 5MB.
+                              </span>
+                            </div>
+                            {uploadError && (
+                              <span className="text-[10px] text-rose-600 font-medium block mt-1">
+                                {uploadError}
+                              </span>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Description field */}
@@ -572,7 +728,7 @@ export default function AdminProductosPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || isUploading || !formImageUrl}
                   className="rounded-md bg-primary hover:bg-primary-hover px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition duration-200 flex items-center gap-2 cursor-pointer disabled:bg-divider disabled:cursor-not-allowed"
                 >
                   {submitting ? (
