@@ -33,14 +33,15 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "ignoreScripts": [
-    "sharp",
-    "unrs-resolver"
-  ],
-  "trustedDependencies": [
-    "sharp",
-    "unrs-resolver"
-  ],
+  "pnpmConfig": {
+    "allowNonAppliedPatches": true,
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver",
+      "@prisma/engines",
+      "prisma"
+    ]
+  },
   "prisma": {
     "seed": "bun prisma/seed.ts"
   }
