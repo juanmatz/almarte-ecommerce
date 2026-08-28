@@ -33,13 +33,12 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "pnpmConfig": {
-    "allowNonAppliedPatches": true,
+  "pnpm": {
     "onlyBuiltDependencies": [
-      "sharp",
-      "unrs-resolver",
       "@prisma/engines",
-      "prisma"
+      "prisma",
+      "sharp",
+      "unrs-resolver"
     ]
   },
   "prisma": {
