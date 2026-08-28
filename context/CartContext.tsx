@@ -10,6 +10,7 @@ export interface Product {
   discount_price?: number;
   is_available: boolean;
   image_url: string;
+  image_urls?: string[];
   category: string;
   subcategory?: string;
 }

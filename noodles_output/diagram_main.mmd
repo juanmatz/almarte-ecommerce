@@ -1,0 +1,94 @@
+graph LR
+    classDef start fill:none,stroke:#4db6ac,color:#00695c
+    classDef process fill:none,stroke:#64b5f6,color:#1565c0
+    classDef endpoint fill:none,stroke:#e57373,color:#c62828
+    classDef updated fill:#fff9c4,stroke:#f9a825,color:#f57f17
+    classDef new fill:#c8e6c9,stroke:#66bb6a,color:#2e7d32
+    app_admin_layout_tsx_handleLogout{{"app\admin\layout:handleLogout"}}:::start
+    app_admin_ordenes_page_tsx_AdminOrdenesPage{{"app\admin\ordenes\page:AdminOrdenesPage"}}:::start
+    app_admin_ordenes_page_tsx_formatCOP(["app\admin\ordenes\page:formatCOP"]):::endpoint
+    app_admin_ordenes_page_tsx_handleSaveShipment{{"app\admin\ordenes\page:handleSaveShipment"}}:::start
+    app_admin_ordenes_page_tsx_handleUpdateOrderStatus{{"app\admin\ordenes\page:handleUpdateOrderStatus"}}:::start
+    app_admin_ordenes_page_tsx_showNotification(["app\admin\ordenes\page:showNotification"]):::endpoint
+    app_admin_page_tsx_AdminDashboard{{"app\admin\page:AdminDashboard"}}:::start
+    app_admin_page_tsx_MetricCard(["app\admin\page:MetricCard"]):::endpoint
+    app_admin_page_tsx_formatCOP(["app\admin\page:formatCOP"]):::endpoint
+    app_admin_productos_page_tsx_fetchProducts(["app\admin\productos\page:fetchProducts"]):::endpoint
+    app_admin_productos_page_tsx_handleDeleteProduct{{"app\admin\productos\page:handleDeleteProduct"}}:::start
+    app_admin_productos_page_tsx_handleSubmit{{"app\admin\productos\page:handleSubmit"}}:::start
+    app_admin_productos_page_tsx_handleToggleAvailable{{"app\admin\productos\page:handleToggleAvailable"}}:::start
+    app_admin_productos_page_tsx_showNotification(["app\admin\productos\page:showNotification"]):::endpoint
+    app_catalogo_categoria_page_tsx_CatalogSkeleton(["app\catalogo\[categoria]\page:CatalogSkeleton"]):::endpoint
+    app_catalogo_categoria_page_tsx_CategoryCatalogPage{{"app\catalogo\[categoria]\page:CategoryCatalogPage"}}:::start
+    app_catalogo_page_tsx_CatalogPage{{"app\catalogo\page:CatalogPage"}}:::start
+    app_catalogo_page_tsx_CatalogSkeleton(["app\catalogo\page:CatalogSkeleton"]):::endpoint
+    app_checkout_page_tsx_CheckoutPage{{"app\checkout\page:CheckoutPage"}}:::start
+    app_checkout_page_tsx_formatCOP(["app\checkout\page:formatCOP"]):::endpoint
+    app_checkout_page_tsx_handleAccountActivation{{"app\checkout\page:handleAccountActivation"}}:::start
+    app_checkout_page_tsx_handleCheckoutSubmit{{"app\checkout\page:handleCheckoutSubmit"}}:::start
+    app_checkout_page_tsx_handleInlineLogin{{"app\checkout\page:handleInlineLogin"}}:::start
+    app_cuenta_login_page_tsx_handleSubmit{{"app\cuenta\login\page:handleSubmit"}}:::start
+    app_cuenta_registro_page_tsx_handleSubmit{{"app\cuenta\registro\page:handleSubmit"}}:::start
+    components_AvailabilityBadge_tsx_AvailabilityBadge(["components\AvailabilityBadge:AvailabilityBadge"]):::endpoint
+    components_CartDrawer_tsx_handleKeyDown{{"components\CartDrawer:handleKeyDown"}}:::start
+    components_CatalogContent_tsx_CatalogContent{{"components\CatalogContent:CatalogContent"}}:::start
+    components_CatalogContent_tsx_formatCOP(["components\CatalogContent:formatCOP"]):::endpoint
+    components_PriceDisplay_tsx_PriceDisplay["components\PriceDisplay:PriceDisplay"]:::process
+    components_PriceDisplay_tsx_formatPrice(["components\PriceDisplay:formatPrice"]):::endpoint
+    components_ProductCard_tsx_ProductCard{{"components\ProductCard:ProductCard"}}:::start
+    components_ProductCard_tsx_handleAddToCart{{"components\ProductCard:handleAddToCart"}}:::start
+    components_ProductDetails_tsx_ProductDetails{{"components\ProductDetails:ProductDetails"}}:::start
+    components_ProductDetails_tsx_formatCOP(["components\ProductDetails:formatCOP"]):::endpoint
+    components_ProductDetails_tsx_getCategoryDetails(["components\ProductDetails:getCategoryDetails"]):::endpoint
+    components_ProductDetails_tsx_handleAddToCart{{"components\ProductDetails:handleAddToCart"}}:::start
+    components_StarRating_tsx_StarRating(["components\StarRating:StarRating"]):::endpoint
+    context_AuthContext_tsx_login(["context\AuthContext:login"]):::endpoint
+    context_AuthContext_tsx_loginWithCredentials["context\AuthContext:loginWithCredentials"]:::process
+    context_AuthContext_tsx_logout(["context\AuthContext:logout"]):::endpoint
+    context_AuthContext_tsx_register["context\AuthContext:register"]:::process
+    context_CartContext_tsx_addToCart(["context\CartContext:addToCart"]):::endpoint
+    context_CartContext_tsx_clearCart(["context\CartContext:clearCart"]):::endpoint
+    context_CartContext_tsx_closeCart(["context\CartContext:closeCart"]):::endpoint
+    context_CartContext_tsx_removeFromCart(["context\CartContext:removeFromCart"]):::endpoint
+    context_CartContext_tsx_updateQuantity{{"context\CartContext:updateQuantity"}}:::start
+    lib_auth_ts_base64UrlDecode(["lib\auth:base64UrlDecode"]):::endpoint
+    lib_auth_ts_getAuthUser{{"lib\auth:getAuthUser"}}:::start
+    lib_auth_ts_verifyJWT["lib\auth:verifyJWT"]:::process
+    proxy_ts_proxy{{"proxy:proxy"}}:::start
+    app_admin_layout_tsx_handleLogout --> context_AuthContext_tsx_logout
+    app_admin_ordenes_page_tsx_AdminOrdenesPage -.-> app_admin_ordenes_page_tsx_formatCOP
+    app_admin_ordenes_page_tsx_handleSaveShipment --> app_admin_ordenes_page_tsx_showNotification
+    app_admin_ordenes_page_tsx_handleUpdateOrderStatus --> app_admin_ordenes_page_tsx_showNotification
+    app_admin_page_tsx_AdminDashboard -.-> app_admin_page_tsx_MetricCard
+    app_admin_page_tsx_AdminDashboard -.-> app_admin_page_tsx_formatCOP
+    app_admin_productos_page_tsx_handleDeleteProduct --> app_admin_productos_page_tsx_showNotification
+    app_admin_productos_page_tsx_handleSubmit --> app_admin_productos_page_tsx_showNotification
+    app_admin_productos_page_tsx_handleSubmit --> app_admin_productos_page_tsx_fetchProducts
+    app_admin_productos_page_tsx_handleToggleAvailable --> app_admin_productos_page_tsx_showNotification
+    app_catalogo_categoria_page_tsx_CategoryCatalogPage -.-> app_catalogo_categoria_page_tsx_CatalogSkeleton
+    app_catalogo_page_tsx_CatalogPage -.-> app_catalogo_page_tsx_CatalogSkeleton
+    app_checkout_page_tsx_CheckoutPage -.-> app_checkout_page_tsx_formatCOP
+    app_checkout_page_tsx_handleAccountActivation -.-> context_AuthContext_tsx_register
+    app_checkout_page_tsx_handleCheckoutSubmit --> context_CartContext_tsx_clearCart
+    app_checkout_page_tsx_handleInlineLogin -.-> context_AuthContext_tsx_loginWithCredentials
+    app_cuenta_login_page_tsx_handleSubmit -.-> context_AuthContext_tsx_loginWithCredentials
+    app_cuenta_registro_page_tsx_handleSubmit -.-> context_AuthContext_tsx_register
+    components_CartDrawer_tsx_handleKeyDown --> context_CartContext_tsx_closeCart
+    components_CatalogContent_tsx_CatalogContent -.-> components_CatalogContent_tsx_formatCOP
+    components_PriceDisplay_tsx_PriceDisplay -.-> components_PriceDisplay_tsx_formatPrice
+    components_ProductCard_tsx_ProductCard -.-> components_AvailabilityBadge_tsx_AvailabilityBadge
+    components_ProductCard_tsx_ProductCard -.-> components_StarRating_tsx_StarRating
+    components_ProductCard_tsx_ProductCard -.-> components_PriceDisplay_tsx_PriceDisplay
+    components_ProductCard_tsx_handleAddToCart --> context_CartContext_tsx_addToCart
+    components_ProductDetails_tsx_ProductDetails -.-> components_ProductDetails_tsx_getCategoryDetails
+    components_ProductDetails_tsx_ProductDetails -.-> components_AvailabilityBadge_tsx_AvailabilityBadge
+    components_ProductDetails_tsx_ProductDetails -.-> components_StarRating_tsx_StarRating
+    components_ProductDetails_tsx_ProductDetails -.-> components_PriceDisplay_tsx_PriceDisplay
+    components_ProductDetails_tsx_ProductDetails -.-> components_ProductDetails_tsx_formatCOP
+    components_ProductDetails_tsx_handleAddToCart --> context_CartContext_tsx_addToCart
+    context_AuthContext_tsx_loginWithCredentials --> context_AuthContext_tsx_login
+    context_AuthContext_tsx_register --> context_AuthContext_tsx_login
+    context_CartContext_tsx_updateQuantity --> context_CartContext_tsx_removeFromCart
+    lib_auth_ts_getAuthUser -.-> lib_auth_ts_verifyJWT
+    lib_auth_ts_verifyJWT -.-> lib_auth_ts_base64UrlDecode
+    proxy_ts_proxy -.-> lib_auth_ts_verifyJWT

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noodles Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #fff;
+    color: #333;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- Breadcrumb bar --- */
+  #breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+
+  #back-btn {
+    background: none;
+    border: 1px solid #ccc;
+    color: #555;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  #back-btn:hover { background: #e0e0e0; }
+  #back-btn:disabled { opacity: 0.3; cursor: default; }
+  #back-btn:disabled:hover { background: none; }
+
+  #breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  .crumb {
+    color: #1a73e8;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .crumb:hover { background: #e8f0fe; }
+  .crumb.current {
+    color: #333;
+    cursor: default;
+    font-weight: 600;
+  }
+  .crumb.current:hover { background: none; }
+
+  .crumb-sep { color: #999; margin: 0 2px; }
+
+  /* --- Diagram area --- */
+  #diagram-area {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+  }
+  #diagram-area.panning { cursor: grabbing; }
+
+  #svg-container {
+    position: absolute;
+    transform-origin: 0 0;
+  }
+
+  /* Make clickable nodes stand out */
+  #svg-container .node.clickable { cursor: pointer; }
+  #svg-container .node.clickable:hover rect,
+  #svg-container .node.clickable:hover polygon,
+  #svg-container .node.clickable:hover .basic.label-container {
+    filter: brightness(1.15);
+    stroke-width: 2.5px;
+  }
+
+  /* --- Tooltip --- */
+  #tooltip {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    max-width: 420px;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    pointer-events: none;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  #tooltip .tt-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #222;
+    margin-bottom: 4px;
+  }
+  #tooltip .tt-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    font-weight: 400;
+  }
+  #tooltip .tt-badge.start_point { background: #e0f2f1; color: #00695c; }
+  #tooltip .tt-badge.process { background: #d6e4f0; color: #1a4a7a; }
+  #tooltip .tt-badge.end_point { background: #f8d7da; color: #721c24; }
+  #tooltip .tt-badge.updated { background: #fff9c4; color: #f57f17; }
+  #tooltip .tt-badge.new { background: #c8e6c9; color: #2e7d32; }
+  #tooltip .tt-desc { color: #555; margin-bottom: 6px; }
+  #tooltip .tt-file {
+    color: #888;
+    font-size: 12px;
+    font-family: monospace;
+    word-break: break-all;
+  }
+  #tooltip .tt-update {
+    color: #f57f17;
+    font-style: italic;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #eee;
+    font-size: 12px;
+  }
+  #tooltip .tt-edge-label { font-weight: 600; color: #1a73e8; margin-bottom: 4px; }
+  #tooltip .tt-row { color: #666; font-size: 12px; }
+  #tooltip .tt-row span { color: #333; }
+
+  /* --- Legend --- */
+  #legend {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    pointer-events: auto;
+  }
+  #legend .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 22px;
+  }
+  #legend .legend-sep {
+    border-top: 1px solid #e0e0e0;
+    margin: 6px 0;
+  }
+  #legend .legend-hint {
+    color: #888;
+    font-size: 11px;
+    padding-left: 2px;
+  }
+
+  /* --- Loading --- */
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+
+<div id="breadcrumb-bar">
+  <button id="back-btn" disabled>&larr; Back</button>
+  <div id="breadcrumb"></div>
+</div>
+
+<div id="diagram-area">
+  <div id="svg-container"></div>
+  <div id="loading">Loading diagrams...</div>
+  <div id="legend">
+    <div class="legend-row">
+      <svg width="20" height="16" viewBox="0 0 20 16"><polygon points="5,0 15,0 20,8 15,16 5,16 0,8" fill="none" stroke="#4db6ac" stroke-width="1.5"/></svg>
+      <span>Start Point</span>
+    </div>
+    <div class="legend-row">
+      <svg width="20" height="16" viewBox="0 0 20 16"><rect x="1" y="1" width="18" height="14" fill="#e3f2fd" stroke="#64b5f6" stroke-width="1.5"/></svg>
+      <span>Process</span>
+    </div>
+    <div class="legend-row">
+      <svg width="20" height="16" viewBox="0 0 20 16"><rect x="1" y="1" width="18" height="14" rx="7" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/></svg>
+      <span>End Point</span>
+    </div>
+    <div class="legend-sep"></div>
+    <div class="legend-row">
+      <span style="font-size:11px;font-weight:600;color:#555;width:20px;text-align:center">[+]</span>
+      <span>Has subdiagram</span>
+    </div>
+    <div class="legend-sep"></div>
+    <div class="legend-row">
+      <svg width="20" height="16" viewBox="0 0 20 16"><rect x="1" y="1" width="18" height="14" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/></svg>
+      <span>Updated</span>
+    </div>
+    <div class="legend-row">
+      <svg width="20" height="16" viewBox="0 0 20 16"><rect x="1" y="1" width="18" height="14" fill="#c8e6c9" stroke="#66bb6a" stroke-width="1.5"/></svg>
+      <span>New</span>
+    </div>
+    <div class="legend-sep"></div>
+    <div class="legend-hint">Click [+] node to jump</div>
+    <div class="legend-hint">Hover node for details</div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+(function() {
+  // ---- HTML escaping for XSS prevention ----
+  function escapeHtml(str) {
+    if (str == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  // ---- State ----
+  let DATA = null;       // data bundle from /api/data
+  let navStack = [];     // [{diagramName, title}]
+  let currentDiagram = null;
+
+  // Pan & zoom state
+  let zoom = 1;
+  let panX = 0, panY = 0;
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0;
+  let panStartPanX = 0, panStartPanY = 0;
+
+  // Touch state
+  let lastTouchCenter = null;
+  let lastTouchDistance = null;
+
+  const MIN_ZOOM = 0.1;
+  const MAX_ZOOM = 5;
+
+  // DOM refs
+  const area = document.getElementById('diagram-area');
+  const container = document.getElementById('svg-container');
+  const tooltip = document.getElementById('tooltip');
+  const breadcrumb = document.getElementById('breadcrumb');
+  const backBtn = document.getElementById('back-btn');
+  const loading = document.getElementById('loading');
+
+  // ---- Init ----
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'default',
+    flowchart: { curve: 'basis', useMaxWidth: false },
+    securityLevel: 'strict',
+  });
+
+  DATA = {"diagrams": {"main": "graph LR\n    classDef start fill:none,stroke:#4db6ac,color:#00695c\n    classDef process fill:none,stroke:#64b5f6,color:#1565c0\n    classDef endpoint fill:none,stroke:#e57373,color:#c62828\n    classDef updated fill:#fff9c4,stroke:#f9a825,color:#f57f17\n    classDef new fill:#c8e6c9,stroke:#66bb6a,color:#2e7d32\n    app_admin_layout_tsx_handleLogout{{\"app\\admin\\layout:handleLogout\"}}:::start\n    app_admin_ordenes_page_tsx_AdminOrdenesPage{{\"app\\admin\\ordenes\\page:AdminOrdenesPage\"}}:::start\n    app_admin_ordenes_page_tsx_formatCOP([\"app\\admin\\ordenes\\page:formatCOP\"]):::endpoint\n    app_admin_ordenes_page_tsx_handleSaveShipment{{\"app\\admin\\ordenes\\page:handleSaveShipment\"}}:::start\n    app_admin_ordenes_page_tsx_handleUpdateOrderStatus{{\"app\\admin\\ordenes\\page:handleUpdateOrderStatus\"}}:::start\n    app_admin_ordenes_page_tsx_showNotification([\"app\\admin\\ordenes\\page:showNotification\"]):::endpoint\n    app_admin_page_tsx_AdminDashboard{{\"app\\admin\\page:AdminDashboard\"}}:::start\n    app_admin_page_tsx_MetricCard([\"app\\admin\\page:MetricCard\"]):::endpoint\n    app_admin_page_tsx_formatCOP([\"app\\admin\\page:formatCOP\"]):::endpoint\n    app_admin_productos_page_tsx_fetchProducts([\"app\\admin\\productos\\page:fetchProducts\"]):::endpoint\n    app_admin_productos_page_tsx_handleDeleteProduct{{\"app\\admin\\productos\\page:handleDeleteProduct\"}}:::start\n    app_admin_productos_page_tsx_handleSubmit{{\"app\\admin\\productos\\page:handleSubmit\"}}:::start\n    app_admin_productos_page_tsx_handleToggleAvailable{{\"app\\admin\\productos\\page:handleToggleAvailable\"}}:::start\n    app_admin_productos_page_tsx_showNotification([\"app\\admin\\productos\\page:showNotification\"]):::endpoint\n    app_catalogo_categoria_page_tsx_CatalogSkeleton([\"app\\catalogo\\[categoria]\\page:CatalogSkeleton\"]):::endpoint\n    app_catalogo_categoria_page_tsx_CategoryCatalogPage{{\"app\\catalogo\\[categoria]\\page:CategoryCatalogPage\"}}:::start\n    app_catalogo_page_tsx_CatalogPage{{\"app\\catalogo\\page:CatalogPage\"}}:::start\n    app_catalogo_page_tsx_CatalogSkeleton([\"app\\catalogo\\page:CatalogSkeleton\"]):::endpoint\n    app_checkout_page_tsx_CheckoutPage{{\"app\\checkout\\page:CheckoutPage\"}}:::start\n    app_checkout_page_tsx_formatCOP([\"app\\checkout\\page:formatCOP\"]):::endpoint\n    app_checkout_page_tsx_handleAccountActivation{{\"app\\checkout\\page:handleAccountActivation\"}}:::start\n    app_checkout_page_tsx_handleCheckoutSubmit{{\"app\\checkout\\page:handleCheckoutSubmit\"}}:::start\n    app_checkout_page_tsx_handleInlineLogin{{\"app\\checkout\\page:handleInlineLogin\"}}:::start\n    app_cuenta_login_page_tsx_handleSubmit{{\"app\\cuenta\\login\\page:handleSubmit\"}}:::start\n    app_cuenta_registro_page_tsx_handleSubmit{{\"app\\cuenta\\registro\\page:handleSubmit\"}}:::start\n    components_AvailabilityBadge_tsx_AvailabilityBadge([\"components\\AvailabilityBadge:AvailabilityBadge\"]):::endpoint\n    components_CartDrawer_tsx_handleKeyDown{{\"components\\CartDrawer:handleKeyDown\"}}:::start\n    components_CatalogContent_tsx_CatalogContent{{\"components\\CatalogContent:CatalogContent\"}}:::start\n    components_CatalogContent_tsx_formatCOP([\"components\\CatalogContent:formatCOP\"]):::endpoint\n    components_PriceDisplay_tsx_PriceDisplay[\"components\\PriceDisplay:PriceDisplay\"]:::process\n    components_PriceDisplay_tsx_formatPrice([\"components\\PriceDisplay:formatPrice\"]):::endpoint\n    components_ProductCard_tsx_ProductCard{{\"components\\ProductCard:ProductCard\"}}:::start\n    components_ProductCard_tsx_handleAddToCart{{\"components\\ProductCard:handleAddToCart\"}}:::start\n    components_ProductDetails_tsx_ProductDetails{{\"components\\ProductDetails:ProductDetails\"}}:::start\n    components_ProductDetails_tsx_formatCOP([\"components\\ProductDetails:formatCOP\"]):::endpoint\n    components_ProductDetails_tsx_getCategoryDetails([\"components\\ProductDetails:getCategoryDetails\"]):::endpoint\n    components_ProductDetails_tsx_handleAddToCart{{\"components\\ProductDetails:handleAddToCart\"}}:::start\n    components_StarRating_tsx_StarRating([\"components\\StarRating:StarRating\"]):::endpoint\n    context_AuthContext_tsx_login([\"context\\AuthContext:login\"]):::endpoint\n    context_AuthContext_tsx_loginWithCredentials[\"context\\AuthContext:loginWithCredentials\"]:::process\n    context_AuthContext_tsx_logout([\"context\\AuthContext:logout\"]):::endpoint\n    context_AuthContext_tsx_register[\"context\\AuthContext:register\"]:::process\n    context_CartContext_tsx_addToCart([\"context\\CartContext:addToCart\"]):::endpoint\n    context_CartContext_tsx_clearCart([\"context\\CartContext:clearCart\"]):::endpoint\n    context_CartContext_tsx_closeCart([\"context\\CartContext:closeCart\"]):::endpoint\n    context_CartContext_tsx_removeFromCart([\"context\\CartContext:removeFromCart\"]):::endpoint\n    context_CartContext_tsx_updateQuantity{{\"context\\CartContext:updateQuantity\"}}:::start\n    lib_auth_ts_base64UrlDecode([\"lib\\auth:base64UrlDecode\"]):::endpoint\n    lib_auth_ts_getAuthUser{{\"lib\\auth:getAuthUser\"}}:::start\n    lib_auth_ts_verifyJWT[\"lib\\auth:verifyJWT\"]:::process\n    proxy_ts_proxy{{\"proxy:proxy\"}}:::start\n    app_admin_layout_tsx_handleLogout --> context_AuthContext_tsx_logout\n    app_admin_ordenes_page_tsx_AdminOrdenesPage -.-> app_admin_ordenes_page_tsx_formatCOP\n    app_admin_ordenes_page_tsx_handleSaveShipment --> app_admin_ordenes_page_tsx_showNotification\n    app_admin_ordenes_page_tsx_handleUpdateOrderStatus --> app_admin_ordenes_page_tsx_showNotification\n    app_admin_page_tsx_AdminDashboard -.-> app_admin_page_tsx_MetricCard\n    app_admin_page_tsx_AdminDashboard -.-> app_admin_page_tsx_formatCOP\n    app_admin_productos_page_tsx_handleDeleteProduct --> app_admin_productos_page_tsx_showNotification\n    app_admin_productos_page_tsx_handleSubmit --> app_admin_productos_page_tsx_showNotification\n    app_admin_productos_page_tsx_handleSubmit --> app_admin_productos_page_tsx_fetchProducts\n    app_admin_productos_page_tsx_handleToggleAvailable --> app_admin_productos_page_tsx_showNotification\n    app_catalogo_categoria_page_tsx_CategoryCatalogPage -.-> app_catalogo_categoria_page_tsx_CatalogSkeleton\n    app_catalogo_page_tsx_CatalogPage -.-> app_catalogo_page_tsx_CatalogSkeleton\n    app_checkout_page_tsx_CheckoutPage -.-> app_checkout_page_tsx_formatCOP\n    app_checkout_page_tsx_handleAccountActivation -.-> context_AuthContext_tsx_register\n    app_checkout_page_tsx_handleCheckoutSubmit --> context_CartContext_tsx_clearCart\n    app_checkout_page_tsx_handleInlineLogin -.-> context_AuthContext_tsx_loginWithCredentials\n    app_cuenta_login_page_tsx_handleSubmit -.-> context_AuthContext_tsx_loginWithCredentials\n    app_cuenta_registro_page_tsx_handleSubmit -.-> context_AuthContext_tsx_register\n    components_CartDrawer_tsx_handleKeyDown --> context_CartContext_tsx_closeCart\n    components_CatalogContent_tsx_CatalogContent -.-> components_CatalogContent_tsx_formatCOP\n    components_PriceDisplay_tsx_PriceDisplay -.-> components_PriceDisplay_tsx_formatPrice\n    components_ProductCard_tsx_ProductCard -.-> components_AvailabilityBadge_tsx_AvailabilityBadge\n    components_ProductCard_tsx_ProductCard -.-> components_StarRating_tsx_StarRating\n    components_ProductCard_tsx_ProductCard -.-> components_PriceDisplay_tsx_PriceDisplay\n    components_ProductCard_tsx_handleAddToCart --> context_CartContext_tsx_addToCart\n    components_ProductDetails_tsx_ProductDetails -.-> components_ProductDetails_tsx_getCategoryDetails\n    components_ProductDetails_tsx_ProductDetails -.-> components_AvailabilityBadge_tsx_AvailabilityBadge\n    components_ProductDetails_tsx_ProductDetails -.-> components_StarRating_tsx_StarRating\n    components_ProductDetails_tsx_ProductDetails -.-> components_PriceDisplay_tsx_PriceDisplay\n    components_ProductDetails_tsx_ProductDetails -.-> components_ProductDetails_tsx_formatCOP\n    components_ProductDetails_tsx_handleAddToCart --> context_CartContext_tsx_addToCart\n    context_AuthContext_tsx_loginWithCredentials --> context_AuthContext_tsx_login\n    context_AuthContext_tsx_register --> context_AuthContext_tsx_login\n    context_CartContext_tsx_updateQuantity --> context_CartContext_tsx_removeFromCart\n    lib_auth_ts_getAuthUser -.-> lib_auth_ts_verifyJWT\n    lib_auth_ts_verifyJWT -.-> lib_auth_ts_base64UrlDecode\n    proxy_ts_proxy -.-> lib_auth_ts_verifyJWT\n"}, "navigation": {}, "nodes": {"app\\admin\\layout.tsx::AdminLayout": {"name": "AdminLayout", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\layout.tsx", "function": "AdminLayout", "status": "unchanged", "update": ""}, "app\\admin\\layout.tsx::handleLogout": {"name": "handleLogout", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\layout.tsx", "function": "handleLogout", "status": "unchanged", "update": ""}, "app\\admin\\layout.tsx::isActive": {"name": "isActive", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\layout.tsx", "function": "isActive", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::AdminOrdenesPage": {"name": "AdminOrdenesPage", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "AdminOrdenesPage", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::closeModal": {"name": "closeModal", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "closeModal", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::fetchOrders": {"name": "fetchOrders", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "fetchOrders", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::getOrderStatusBadge": {"name": "getOrderStatusBadge", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "getOrderStatusBadge", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::getShipmentBadge": {"name": "getShipmentBadge", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "getShipmentBadge", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::handleManageOrder": {"name": "handleManageOrder", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "handleManageOrder", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::handleSaveShipment": {"name": "handleSaveShipment", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "handleSaveShipment", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::handleUpdateOrderStatus": {"name": "handleUpdateOrderStatus", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "handleUpdateOrderStatus", "status": "unchanged", "update": ""}, "app\\admin\\ordenes\\page.tsx::showNotification": {"name": "showNotification", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\ordenes\\page.tsx", "function": "showNotification", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::AdminDashboard": {"name": "AdminDashboard", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "AdminDashboard", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::MetricCard": {"name": "MetricCard", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "MetricCard", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::fetchMetrics": {"name": "fetchMetrics", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "fetchMetrics", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::getOrderStatusBadge": {"name": "getOrderStatusBadge", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "getOrderStatusBadge", "status": "unchanged", "update": ""}, "app\\admin\\page.tsx::getShipmentBadge": {"name": "getShipmentBadge", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\page.tsx", "function": "getShipmentBadge", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::AdminProductosPage": {"name": "AdminProductosPage", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "AdminProductosPage", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::fetchProducts": {"name": "fetchProducts", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "fetchProducts", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::handleDeleteProduct": {"name": "handleDeleteProduct", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "handleDeleteProduct", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::handleSubmit": {"name": "handleSubmit", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "handleSubmit", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::handleToggleAvailable": {"name": "handleToggleAvailable", "description": "", "type": "start_point", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "handleToggleAvailable", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::openCreateModal": {"name": "openCreateModal", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "openCreateModal", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::openEditModal": {"name": "openEditModal", "description": "", "type": "orphan", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "openEditModal", "status": "unchanged", "update": ""}, "app\\admin\\productos\\page.tsx::showNotification": {"name": "showNotification", "description": "", "type": "end_point", "tag": "", "file_path": "app\\admin\\productos\\page.tsx", "function": "showNotification", "status": "unchanged", "update": ""}, "app\\api\\admin\\metrics\\route.ts::GET": {"name": "GET", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\metrics\\route.ts", "function": "GET", "status": "unchanged", "update": ""}, "app\\api\\admin\\orders\\[id]\\route.ts::PATCH": {"name": "PATCH", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\orders\\[id]\\route.ts", "function": "PATCH", "status": "unchanged", "update": ""}, "app\\api\\admin\\orders\\route.ts::GET": {"name": "GET", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\orders\\route.ts", "function": "GET", "status": "unchanged", "update": ""}, "app\\api\\admin\\products\\[id]\\route.ts::DELETE": {"name": "DELETE", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\products\\[id]\\route.ts", "function": "DELETE", "status": "unchanged", "update": ""}, "app\\api\\admin\\products\\[id]\\route.ts::PATCH": {"name": "PATCH", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\products\\[id]\\route.ts", "function": "PATCH", "status": "unchanged", "update": ""}, "app\\api\\admin\\products\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\products\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\admin\\shipments\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\admin\\shipments\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\auth\\login\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\auth\\login\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\auth\\register\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\auth\\register\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\checkout\\guest-intent\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\checkout\\guest-intent\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\orders\\route.ts::GET": {"name": "GET", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\orders\\route.ts", "function": "GET", "status": "unchanged", "update": ""}, "app\\api\\products\\[id]\\route.ts::GET": {"name": "GET", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\products\\[id]\\route.ts", "function": "GET", "status": "unchanged", "update": ""}, "app\\api\\products\\[id]\\route.ts::POST": {"name": "POST", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\products\\[id]\\route.ts", "function": "POST", "status": "unchanged", "update": ""}, "app\\api\\products\\route.ts::GET": {"name": "GET", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\products\\route.ts", "function": "GET", "status": "unchanged", "update": ""}, "app\\api\\reviews\\[id]\\route.ts::DELETE": {"name": "DELETE", "description": "", "type": "orphan", "tag": "", "file_path": "app\\api\\reviews\\[id]\\route.ts", "function": "DELETE", "status": "unchanged", "update": ""}, "app\\catalogo\\[categoria]\\page.tsx::CatalogSkeleton": {"name": "CatalogSkeleton", "description": "", "type": "end_point", "tag": "", "file_path": "app\\catalogo\\[categoria]\\page.tsx", "function": "CatalogSkeleton", "status": "unchanged", "update": ""}, "app\\catalogo\\[categoria]\\page.tsx::CategoryCatalogPage": {"name": "CategoryCatalogPage", "description": "", "type": "start_point", "tag": "", "file_path": "app\\catalogo\\[categoria]\\page.tsx", "function": "CategoryCatalogPage", "status": "unchanged", "update": ""}, "app\\catalogo\\[categoria]\\page.tsx::generateMetadata": {"name": "generateMetadata", "description": "", "type": "orphan", "tag": "", "file_path": "app\\catalogo\\[categoria]\\page.tsx", "function": "generateMetadata", "status": "unchanged", "update": ""}, "app\\catalogo\\page.tsx::CatalogPage": {"name": "CatalogPage", "description": "", "type": "start_point", "tag": "", "file_path": "app\\catalogo\\page.tsx", "function": "CatalogPage", "status": "unchanged", "update": ""}, "app\\catalogo\\page.tsx::CatalogSkeleton": {"name": "CatalogSkeleton", "description": "", "type": "end_point", "tag": "", "file_path": "app\\catalogo\\page.tsx", "function": "CatalogSkeleton", "status": "unchanged", "update": ""}, "app\\checkout\\page.tsx::CheckoutPage": {"name": "CheckoutPage", "description": "", "type": "start_point", "tag": "", "file_path": "app\\checkout\\page.tsx", "function": "CheckoutPage", "status": "unchanged", "update": ""}, "app\\checkout\\page.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "end_point", "tag": "", "file_path": "app\\checkout\\page.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "app\\checkout\\page.tsx::handleAccountActivation": {"name": "handleAccountActivation", "description": "", "type": "start_point", "tag": "", "file_path": "app\\checkout\\page.tsx", "function": "handleAccountActivation", "status": "unchanged", "update": ""}, "app\\checkout\\page.tsx::handleCheckoutSubmit": {"name": "handleCheckoutSubmit", "description": "", "type": "start_point", "tag": "", "file_path": "app\\checkout\\page.tsx", "function": "handleCheckoutSubmit", "status": "unchanged", "update": ""}, "app\\checkout\\page.tsx::handleInlineLogin": {"name": "handleInlineLogin", "description": "", "type": "start_point", "tag": "", "file_path": "app\\checkout\\page.tsx", "function": "handleInlineLogin", "status": "unchanged", "update": ""}, "app\\cuenta\\login\\page.tsx::LoginPage": {"name": "LoginPage", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\login\\page.tsx", "function": "LoginPage", "status": "unchanged", "update": ""}, "app\\cuenta\\login\\page.tsx::handleSubmit": {"name": "handleSubmit", "description": "", "type": "start_point", "tag": "", "file_path": "app\\cuenta\\login\\page.tsx", "function": "handleSubmit", "status": "unchanged", "update": ""}, "app\\cuenta\\page.tsx::CuentaPage": {"name": "CuentaPage", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\page.tsx", "function": "CuentaPage", "status": "unchanged", "update": ""}, "app\\cuenta\\page.tsx::fetchOrders": {"name": "fetchOrders", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\page.tsx", "function": "fetchOrders", "status": "unchanged", "update": ""}, "app\\cuenta\\page.tsx::formatCurrency": {"name": "formatCurrency", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\page.tsx", "function": "formatCurrency", "status": "unchanged", "update": ""}, "app\\cuenta\\page.tsx::formatDate": {"name": "formatDate", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\page.tsx", "function": "formatDate", "status": "unchanged", "update": ""}, "app\\cuenta\\registro\\page.tsx::RegisterPage": {"name": "RegisterPage", "description": "", "type": "orphan", "tag": "", "file_path": "app\\cuenta\\registro\\page.tsx", "function": "RegisterPage", "status": "unchanged", "update": ""}, "app\\cuenta\\registro\\page.tsx::handleSubmit": {"name": "handleSubmit", "description": "", "type": "start_point", "tag": "", "file_path": "app\\cuenta\\registro\\page.tsx", "function": "handleSubmit", "status": "unchanged", "update": ""}, "app\\layout.tsx::RootLayout": {"name": "RootLayout", "description": "", "type": "orphan", "tag": "", "file_path": "app\\layout.tsx", "function": "RootLayout", "status": "unchanged", "update": ""}, "app\\page.tsx::Home": {"name": "Home", "description": "", "type": "orphan", "tag": "", "file_path": "app\\page.tsx", "function": "Home", "status": "unchanged", "update": ""}, "app\\producto\\[id]\\page.tsx::ProductPage": {"name": "ProductPage", "description": "", "type": "orphan", "tag": "", "file_path": "app\\producto\\[id]\\page.tsx", "function": "ProductPage", "status": "unchanged", "update": ""}, "app\\producto\\[id]\\page.tsx::generateMetadata": {"name": "generateMetadata", "description": "", "type": "orphan", "tag": "", "file_path": "app\\producto\\[id]\\page.tsx", "function": "generateMetadata", "status": "unchanged", "update": ""}, "components\\AvailabilityBadge.tsx::AvailabilityBadge": {"name": "AvailabilityBadge", "description": "", "type": "end_point", "tag": "", "file_path": "components\\AvailabilityBadge.tsx", "function": "AvailabilityBadge", "status": "unchanged", "update": ""}, "components\\CartDrawer.tsx::CartDrawer": {"name": "CartDrawer", "description": "", "type": "orphan", "tag": "", "file_path": "components\\CartDrawer.tsx", "function": "CartDrawer", "status": "unchanged", "update": ""}, "components\\CartDrawer.tsx::handleKeyDown": {"name": "handleKeyDown", "description": "", "type": "start_point", "tag": "", "file_path": "components\\CartDrawer.tsx", "function": "handleKeyDown", "status": "unchanged", "update": ""}, "components\\CatalogContent.tsx::CatalogContent": {"name": "CatalogContent", "description": "", "type": "start_point", "tag": "", "file_path": "components\\CatalogContent.tsx", "function": "CatalogContent", "status": "unchanged", "update": ""}, "components\\CatalogContent.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "end_point", "tag": "", "file_path": "components\\CatalogContent.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "components\\CatalogContent.tsx::handleResetFilters": {"name": "handleResetFilters", "description": "", "type": "orphan", "tag": "", "file_path": "components\\CatalogContent.tsx", "function": "handleResetFilters", "status": "unchanged", "update": ""}, "components\\Footer.tsx::Footer": {"name": "Footer", "description": "", "type": "orphan", "tag": "", "file_path": "components\\Footer.tsx", "function": "Footer", "status": "unchanged", "update": ""}, "components\\Navbar.tsx::Navbar": {"name": "Navbar", "description": "", "type": "orphan", "tag": "", "file_path": "components\\Navbar.tsx", "function": "Navbar", "status": "unchanged", "update": ""}, "components\\Navbar.tsx::handleClickOutside": {"name": "handleClickOutside", "description": "", "type": "orphan", "tag": "", "file_path": "components\\Navbar.tsx", "function": "handleClickOutside", "status": "unchanged", "update": ""}, "components\\Navbar.tsx::handleScroll": {"name": "handleScroll", "description": "", "type": "orphan", "tag": "", "file_path": "components\\Navbar.tsx", "function": "handleScroll", "status": "unchanged", "update": ""}, "components\\Navbar.tsx::isActive": {"name": "isActive", "description": "", "type": "orphan", "tag": "", "file_path": "components\\Navbar.tsx", "function": "isActive", "status": "unchanged", "update": ""}, "components\\PriceDisplay.tsx::PriceDisplay": {"name": "PriceDisplay", "description": "", "type": "process", "tag": "", "file_path": "components\\PriceDisplay.tsx", "function": "PriceDisplay", "status": "unchanged", "update": ""}, "components\\PriceDisplay.tsx::formatPrice": {"name": "formatPrice", "description": "", "type": "end_point", "tag": "", "file_path": "components\\PriceDisplay.tsx", "function": "formatPrice", "status": "unchanged", "update": ""}, "components\\ProductCard.tsx::ProductCard": {"name": "ProductCard", "description": "", "type": "start_point", "tag": "", "file_path": "components\\ProductCard.tsx", "function": "ProductCard", "status": "unchanged", "update": ""}, "components\\ProductCard.tsx::handleAddToCart": {"name": "handleAddToCart", "description": "", "type": "start_point", "tag": "", "file_path": "components\\ProductCard.tsx", "function": "handleAddToCart", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::ProductDetails": {"name": "ProductDetails", "description": "", "type": "start_point", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "ProductDetails", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::formatCOP": {"name": "formatCOP", "description": "", "type": "end_point", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "formatCOP", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::getCategoryDetails": {"name": "getCategoryDetails", "description": "", "type": "end_point", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "getCategoryDetails", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::handleAddToCart": {"name": "handleAddToCart", "description": "", "type": "start_point", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "handleAddToCart", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::handleDeleteReview": {"name": "handleDeleteReview", "description": "", "type": "orphan", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "handleDeleteReview", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::handleQuantityChange": {"name": "handleQuantityChange", "description": "", "type": "orphan", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "handleQuantityChange", "status": "unchanged", "update": ""}, "components\\ProductDetails.tsx::handleSubmitReview": {"name": "handleSubmitReview", "description": "", "type": "orphan", "tag": "", "file_path": "components\\ProductDetails.tsx", "function": "handleSubmitReview", "status": "unchanged", "update": ""}, "components\\StarRating.tsx::StarRating": {"name": "StarRating", "description": "", "type": "end_point", "tag": "", "file_path": "components\\StarRating.tsx", "function": "StarRating", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::AuthProvider": {"name": "AuthProvider", "description": "", "type": "orphan", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "AuthProvider", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::login": {"name": "login", "description": "", "type": "end_point", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "login", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::loginWithCredentials": {"name": "loginWithCredentials", "description": "", "type": "process", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "loginWithCredentials", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::logout": {"name": "logout", "description": "", "type": "end_point", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "logout", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::register": {"name": "register", "description": "", "type": "process", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "register", "status": "unchanged", "update": ""}, "context\\AuthContext.tsx::useAuth": {"name": "useAuth", "description": "", "type": "orphan", "tag": "", "file_path": "context\\AuthContext.tsx", "function": "useAuth", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::CartProvider": {"name": "CartProvider", "description": "", "type": "orphan", "tag": "", "file_path": "context\\CartContext.tsx", "function": "CartProvider", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::addToCart": {"name": "addToCart", "description": "", "type": "end_point", "tag": "", "file_path": "context\\CartContext.tsx", "function": "addToCart", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::clearCart": {"name": "clearCart", "description": "", "type": "end_point", "tag": "", "file_path": "context\\CartContext.tsx", "function": "clearCart", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::closeCart": {"name": "closeCart", "description": "", "type": "end_point", "tag": "", "file_path": "context\\CartContext.tsx", "function": "closeCart", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::openCart": {"name": "openCart", "description": "", "type": "orphan", "tag": "", "file_path": "context\\CartContext.tsx", "function": "openCart", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::removeFromCart": {"name": "removeFromCart", "description": "", "type": "end_point", "tag": "", "file_path": "context\\CartContext.tsx", "function": "removeFromCart", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::updateQuantity": {"name": "updateQuantity", "description": "", "type": "start_point", "tag": "", "file_path": "context\\CartContext.tsx", "function": "updateQuantity", "status": "unchanged", "update": ""}, "context\\CartContext.tsx::useCart": {"name": "useCart", "description": "", "type": "orphan", "tag": "", "file_path": "context\\CartContext.tsx", "function": "useCart", "status": "unchanged", "update": ""}, "lib\\auth.ts::base64UrlDecode": {"name": "base64UrlDecode", "description": "", "type": "end_point", "tag": "", "file_path": "lib\\auth.ts", "function": "base64UrlDecode", "status": "unchanged", "update": ""}, "lib\\auth.ts::getAuthUser": {"name": "getAuthUser", "description": "", "type": "start_point", "tag": "", "file_path": "lib\\auth.ts", "function": "getAuthUser", "status": "unchanged", "update": ""}, "lib\\auth.ts::verifyJWT": {"name": "verifyJWT", "description": "", "type": "process", "tag": "", "file_path": "lib\\auth.ts", "function": "verifyJWT", "status": "unchanged", "update": ""}, "lib\\db.ts::getDbConfig": {"name": "getDbConfig", "description": "", "type": "orphan", "tag": "", "file_path": "lib\\db.ts", "function": "getDbConfig", "status": "unchanged", "update": ""}, "prisma\\seed.ts::main": {"name": "main", "description": "", "type": "orphan", "tag": "", "file_path": "prisma\\seed.ts", "function": "main", "status": "unchanged", "update": ""}, "proxy.ts::proxy": {"name": "proxy", "description": "", "type": "start_point", "tag": "", "file_path": "proxy.ts", "function": "proxy", "status": "unchanged", "update": ""}}, "edges": {"app_admin_layout_tsx_handleLogout -> context_AuthContext_tsx_logout": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_admin_ordenes_page_tsx_AdminOrdenesPage -> app_admin_ordenes_page_tsx_formatCOP": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_admin_ordenes_page_tsx_handleSaveShipment -> app_admin_ordenes_page_tsx_showNotification": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_admin_ordenes_page_tsx_handleUpdateOrderStatus -> app_admin_ordenes_page_tsx_showNotification": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_admin_page_tsx_AdminDashboard -> app_admin_page_tsx_MetricCard": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_admin_page_tsx_AdminDashboard -> app_admin_page_tsx_formatCOP": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 1}, "app_admin_productos_page_tsx_handleDeleteProduct -> app_admin_productos_page_tsx_showNotification": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_admin_productos_page_tsx_handleSubmit -> app_admin_productos_page_tsx_showNotification": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_admin_productos_page_tsx_handleSubmit -> app_admin_productos_page_tsx_fetchProducts": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 1}, "app_admin_productos_page_tsx_handleToggleAvailable -> app_admin_productos_page_tsx_showNotification": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_catalogo_categoria_page_tsx_CategoryCatalogPage -> app_catalogo_categoria_page_tsx_CatalogSkeleton": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_catalogo_page_tsx_CatalogPage -> app_catalogo_page_tsx_CatalogSkeleton": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_checkout_page_tsx_CheckoutPage -> app_checkout_page_tsx_formatCOP": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_checkout_page_tsx_handleAccountActivation -> context_AuthContext_tsx_register": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_checkout_page_tsx_handleCheckoutSubmit -> context_CartContext_tsx_clearCart": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "app_checkout_page_tsx_handleInlineLogin -> context_AuthContext_tsx_loginWithCredentials": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_cuenta_login_page_tsx_handleSubmit -> context_AuthContext_tsx_loginWithCredentials": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "app_cuenta_registro_page_tsx_handleSubmit -> context_AuthContext_tsx_register": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "components_CartDrawer_tsx_handleKeyDown -> context_CartContext_tsx_closeCart": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "components_CatalogContent_tsx_CatalogContent -> components_CatalogContent_tsx_formatCOP": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "components_PriceDisplay_tsx_PriceDisplay -> components_PriceDisplay_tsx_formatPrice": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "components_ProductCard_tsx_ProductCard -> components_AvailabilityBadge_tsx_AvailabilityBadge": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "components_ProductCard_tsx_ProductCard -> components_StarRating_tsx_StarRating": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 1}, "components_ProductCard_tsx_ProductCard -> components_PriceDisplay_tsx_PriceDisplay": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 2}, "components_ProductCard_tsx_handleAddToCart -> context_CartContext_tsx_addToCart": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "components_ProductDetails_tsx_ProductDetails -> components_ProductDetails_tsx_getCategoryDetails": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "components_ProductDetails_tsx_ProductDetails -> components_AvailabilityBadge_tsx_AvailabilityBadge": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 1}, "components_ProductDetails_tsx_ProductDetails -> components_StarRating_tsx_StarRating": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 2}, "components_ProductDetails_tsx_ProductDetails -> components_PriceDisplay_tsx_PriceDisplay": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 3}, "components_ProductDetails_tsx_ProductDetails -> components_ProductDetails_tsx_formatCOP": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 4}, "components_ProductDetails_tsx_handleAddToCart -> context_CartContext_tsx_addToCart": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "context_AuthContext_tsx_loginWithCredentials -> context_AuthContext_tsx_login": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "context_AuthContext_tsx_register -> context_AuthContext_tsx_login": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "context_CartContext_tsx_updateQuantity -> context_CartContext_tsx_removeFromCart": {"label": "", "description": "", "args": "", "condition": null, "is_returned": false, "index": 0}, "lib_auth_ts_getAuthUser -> lib_auth_ts_verifyJWT": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "lib_auth_ts_verifyJWT -> lib_auth_ts_base64UrlDecode": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}, "proxy_ts_proxy -> lib_auth_ts_verifyJWT": {"label": "", "description": "", "args": "", "condition": null, "is_returned": true, "index": 0}}, "id_map": {"app_admin_layout_tsx_AdminLayout": "app\\admin\\layout.tsx::AdminLayout", "app_admin_layout_tsx_handleLogout": "app\\admin\\layout.tsx::handleLogout", "app_admin_layout_tsx_isActive": "app\\admin\\layout.tsx::isActive", "app_admin_ordenes_page_tsx_AdminOrdenesPage": "app\\admin\\ordenes\\page.tsx::AdminOrdenesPage", "app_admin_ordenes_page_tsx_closeModal": "app\\admin\\ordenes\\page.tsx::closeModal", "app_admin_ordenes_page_tsx_fetchOrders": "app\\admin\\ordenes\\page.tsx::fetchOrders", "app_admin_ordenes_page_tsx_formatCOP": "app\\admin\\ordenes\\page.tsx::formatCOP", "app_admin_ordenes_page_tsx_getOrderStatusBadge": "app\\admin\\ordenes\\page.tsx::getOrderStatusBadge", "app_admin_ordenes_page_tsx_getShipmentBadge": "app\\admin\\ordenes\\page.tsx::getShipmentBadge", "app_admin_ordenes_page_tsx_handleManageOrder": "app\\admin\\ordenes\\page.tsx::handleManageOrder", "app_admin_ordenes_page_tsx_handleSaveShipment": "app\\admin\\ordenes\\page.tsx::handleSaveShipment", "app_admin_ordenes_page_tsx_handleUpdateOrderStatus": "app\\admin\\ordenes\\page.tsx::handleUpdateOrderStatus", "app_admin_ordenes_page_tsx_showNotification": "app\\admin\\ordenes\\page.tsx::showNotification", "app_admin_page_tsx_AdminDashboard": "app\\admin\\page.tsx::AdminDashboard", "app_admin_page_tsx_MetricCard": "app\\admin\\page.tsx::MetricCard", "app_admin_page_tsx_fetchMetrics": "app\\admin\\page.tsx::fetchMetrics", "app_admin_page_tsx_formatCOP": "app\\admin\\page.tsx::formatCOP", "app_admin_page_tsx_getOrderStatusBadge": "app\\admin\\page.tsx::getOrderStatusBadge", "app_admin_page_tsx_getShipmentBadge": "app\\admin\\page.tsx::getShipmentBadge", "app_admin_productos_page_tsx_AdminProductosPage": "app\\admin\\productos\\page.tsx::AdminProductosPage", "app_admin_productos_page_tsx_fetchProducts": "app\\admin\\productos\\page.tsx::fetchProducts", "app_admin_productos_page_tsx_formatCOP": "app\\admin\\productos\\page.tsx::formatCOP", "app_admin_productos_page_tsx_handleDeleteProduct": "app\\admin\\productos\\page.tsx::handleDeleteProduct", "app_admin_productos_page_tsx_handleSubmit": "app\\admin\\productos\\page.tsx::handleSubmit", "app_admin_productos_page_tsx_handleToggleAvailable": "app\\admin\\productos\\page.tsx::handleToggleAvailable", "app_admin_productos_page_tsx_openCreateModal": "app\\admin\\productos\\page.tsx::openCreateModal", "app_admin_productos_page_tsx_openEditModal": "app\\admin\\productos\\page.tsx::openEditModal", "app_admin_productos_page_tsx_showNotification": "app\\admin\\productos\\page.tsx::showNotification", "app_api_admin_metrics_route_ts_GET": "app\\api\\admin\\metrics\\route.ts::GET", "app_api_admin_orders_id_route_ts_PATCH": "app\\api\\admin\\orders\\[id]\\route.ts::PATCH", "app_api_admin_orders_route_ts_GET": "app\\api\\admin\\orders\\route.ts::GET", "app_api_admin_products_id_route_ts_DELETE": "app\\api\\admin\\products\\[id]\\route.ts::DELETE", "app_api_admin_products_id_route_ts_PATCH": "app\\api\\admin\\products\\[id]\\route.ts::PATCH", "app_api_admin_products_route_ts_POST": "app\\api\\admin\\products\\route.ts::POST", "app_api_admin_shipments_route_ts_POST": "app\\api\\admin\\shipments\\route.ts::POST", "app_api_auth_login_route_ts_POST": "app\\api\\auth\\login\\route.ts::POST", "app_api_auth_register_route_ts_POST": "app\\api\\auth\\register\\route.ts::POST", "app_api_checkout_guest_intent_route_ts_POST": "app\\api\\checkout\\guest-intent\\route.ts::POST", "app_api_orders_route_ts_GET": "app\\api\\orders\\route.ts::GET", "app_api_products_id_route_ts_GET": "app\\api\\products\\[id]\\route.ts::GET", "app_api_products_id_route_ts_POST": "app\\api\\products\\[id]\\route.ts::POST", "app_api_products_route_ts_GET": "app\\api\\products\\route.ts::GET", "app_api_reviews_id_route_ts_DELETE": "app\\api\\reviews\\[id]\\route.ts::DELETE", "app_catalogo_categoria_page_tsx_CatalogSkeleton": "app\\catalogo\\[categoria]\\page.tsx::CatalogSkeleton", "app_catalogo_categoria_page_tsx_CategoryCatalogPage": "app\\catalogo\\[categoria]\\page.tsx::CategoryCatalogPage", "app_catalogo_categoria_page_tsx_generateMetadata": "app\\catalogo\\[categoria]\\page.tsx::generateMetadata", "app_catalogo_page_tsx_CatalogPage": "app\\catalogo\\page.tsx::CatalogPage", "app_catalogo_page_tsx_CatalogSkeleton": "app\\catalogo\\page.tsx::CatalogSkeleton", "app_checkout_page_tsx_CheckoutPage": "app\\checkout\\page.tsx::CheckoutPage", "app_checkout_page_tsx_formatCOP": "app\\checkout\\page.tsx::formatCOP", "app_checkout_page_tsx_handleAccountActivation": "app\\checkout\\page.tsx::handleAccountActivation", "app_checkout_page_tsx_handleCheckoutSubmit": "app\\checkout\\page.tsx::handleCheckoutSubmit", "app_checkout_page_tsx_handleInlineLogin": "app\\checkout\\page.tsx::handleInlineLogin", "app_cuenta_login_page_tsx_LoginPage": "app\\cuenta\\login\\page.tsx::LoginPage", "app_cuenta_login_page_tsx_handleSubmit": "app\\cuenta\\login\\page.tsx::handleSubmit", "app_cuenta_page_tsx_CuentaPage": "app\\cuenta\\page.tsx::CuentaPage", "app_cuenta_page_tsx_fetchOrders": "app\\cuenta\\page.tsx::fetchOrders", "app_cuenta_page_tsx_formatCurrency": "app\\cuenta\\page.tsx::formatCurrency", "app_cuenta_page_tsx_formatDate": "app\\cuenta\\page.tsx::formatDate", "app_cuenta_registro_page_tsx_RegisterPage": "app\\cuenta\\registro\\page.tsx::RegisterPage", "app_cuenta_registro_page_tsx_handleSubmit": "app\\cuenta\\registro\\page.tsx::handleSubmit", "app_layout_tsx_RootLayout": "app\\layout.tsx::RootLayout", "app_page_tsx_Home": "app\\page.tsx::Home", "app_producto_id_page_tsx_ProductPage": "app\\producto\\[id]\\page.tsx::ProductPage", "app_producto_id_page_tsx_generateMetadata": "app\\producto\\[id]\\page.tsx::generateMetadata", "components_AvailabilityBadge_tsx_AvailabilityBadge": "components\\AvailabilityBadge.tsx::AvailabilityBadge", "components_CartDrawer_tsx_CartDrawer": "components\\CartDrawer.tsx::CartDrawer", "components_CartDrawer_tsx_handleKeyDown": "components\\CartDrawer.tsx::handleKeyDown", "components_CatalogContent_tsx_CatalogContent": "components\\CatalogContent.tsx::CatalogContent", "components_CatalogContent_tsx_formatCOP": "components\\CatalogContent.tsx::formatCOP", "components_CatalogContent_tsx_handleResetFilters": "components\\CatalogContent.tsx::handleResetFilters", "components_Footer_tsx_Footer": "components\\Footer.tsx::Footer", "components_Navbar_tsx_Navbar": "components\\Navbar.tsx::Navbar", "components_Navbar_tsx_handleClickOutside": "components\\Navbar.tsx::handleClickOutside", "components_Navbar_tsx_handleScroll": "components\\Navbar.tsx::handleScroll", "components_Navbar_tsx_isActive": "components\\Navbar.tsx::isActive", "components_PriceDisplay_tsx_PriceDisplay": "components\\PriceDisplay.tsx::PriceDisplay", "components_PriceDisplay_tsx_formatPrice": "components\\PriceDisplay.tsx::formatPrice", "components_ProductCard_tsx_ProductCard": "components\\ProductCard.tsx::ProductCard", "components_ProductCard_tsx_handleAddToCart": "components\\ProductCard.tsx::handleAddToCart", "components_ProductDetails_tsx_ProductDetails": "components\\ProductDetails.tsx::ProductDetails", "components_ProductDetails_tsx_formatCOP": "components\\ProductDetails.tsx::formatCOP", "components_ProductDetails_tsx_getCategoryDetails": "components\\ProductDetails.tsx::getCategoryDetails", "components_ProductDetails_tsx_handleAddToCart": "components\\ProductDetails.tsx::handleAddToCart", "components_ProductDetails_tsx_handleDeleteReview": "components\\ProductDetails.tsx::handleDeleteReview", "components_ProductDetails_tsx_handleQuantityChange": "components\\ProductDetails.tsx::handleQuantityChange", "components_ProductDetails_tsx_handleSubmitReview": "components\\ProductDetails.tsx::handleSubmitReview", "components_StarRating_tsx_StarRating": "components\\StarRating.tsx::StarRating", "context_AuthContext_tsx_AuthProvider": "context\\AuthContext.tsx::AuthProvider", "context_AuthContext_tsx_login": "context\\AuthContext.tsx::login", "context_AuthContext_tsx_loginWithCredentials": "context\\AuthContext.tsx::loginWithCredentials", "context_AuthContext_tsx_logout": "context\\AuthContext.tsx::logout", "context_AuthContext_tsx_register": "context\\AuthContext.tsx::register", "context_AuthContext_tsx_useAuth": "context\\AuthContext.tsx::useAuth", "context_CartContext_tsx_CartProvider": "context\\CartContext.tsx::CartProvider", "context_CartContext_tsx_addToCart": "context\\CartContext.tsx::addToCart", "context_CartContext_tsx_clearCart": "context\\CartContext.tsx::clearCart", "context_CartContext_tsx_closeCart": "context\\CartContext.tsx::closeCart", "context_CartContext_tsx_openCart": "context\\CartContext.tsx::openCart", "context_CartContext_tsx_removeFromCart": "context\\CartContext.tsx::removeFromCart", "context_CartContext_tsx_updateQuantity": "context\\CartContext.tsx::updateQuantity", "context_CartContext_tsx_useCart": "context\\CartContext.tsx::useCart", "lib_auth_ts_base64UrlDecode": "lib\\auth.ts::base64UrlDecode", "lib_auth_ts_getAuthUser": "lib\\auth.ts::getAuthUser", "lib_auth_ts_verifyJWT": "lib\\auth.ts::verifyJWT", "lib_db_ts_getDbConfig": "lib\\db.ts::getDbConfig", "prisma_seed_ts_main": "prisma\\seed.ts::main", "proxy_ts_proxy": "proxy.ts::proxy"}};
+  setTimeout(() => {
+    loading.style.display = 'none';
+    navigateTo('main', 'Main');
+  }, 0);
+
+  // ---- Rendering ----
+  let renderCounter = 0;
+
+  async function renderDiagram(name) {
+    currentDiagram = name;
+    const source = DATA.diagrams[name];
+    if (!source) {
+      container.innerHTML = '<p style="padding:40px;color:#f66">Diagram not found: ' + name + '</p>';
+      return;
+    }
+
+    renderCounter++;
+    const id = 'mermaid-' + renderCounter;
+
+    try {
+      const { svg } = await mermaid.render(id, source);
+      container.innerHTML = svg;
+      resetView();
+      attachInteractions();
+    } catch (err) {
+      container.innerHTML = '<p style="padding:40px;color:#f66">Render error: ' + err.message + '</p>';
+    }
+  }
+
+  function resetView() {
+    zoom = 1;
+    panX = 0;
+    panY = 0;
+
+    // Reset transform first to measure natural SVG size
+    container.style.transform = 'none';
+
+    const svgEl = container.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.maxWidth = 'none';
+      svgEl.style.height = 'auto';
+      const svgRect = svgEl.getBoundingClientRect();
+      const areaRect = area.getBoundingClientRect();
+      if (svgRect.width > 0 && svgRect.height > 0) {
+        const scaleX = areaRect.width / svgRect.width;
+        const scaleY = areaRect.height / svgRect.height;
+        zoom = Math.min(scaleX, scaleY, 1.5) * 0.9;
+
+        // Center the diagram in the viewport
+        const scaledW = svgRect.width * zoom;
+        const scaledH = svgRect.height * zoom;
+        panX = (areaRect.width - scaledW) / 2;
+        panY = (areaRect.height - scaledH) / 2;
+      }
+    }
+    applyTransform();
+  }
+
+  function applyTransform() {
+    container.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  }
+
+  // ---- Interactions: hover + click ----
+  function attachInteractions() {
+    const svgEl = container.querySelector('svg');
+    if (!svgEl) return;
+
+    const nav = DATA.navigation[currentDiagram] || {};
+
+    // Process nodes
+    const nodeEls = svgEl.querySelectorAll('.node');
+    nodeEls.forEach(nodeEl => {
+      const mermaidId = extractNodeId(nodeEl);
+      if (!mermaidId) return;
+
+      const originalId = DATA.id_map[mermaidId];
+      const meta = originalId ? DATA.nodes[originalId] : null;
+
+      // Hover tooltip
+      nodeEl.addEventListener('mouseenter', (e) => showNodeTooltip(e, meta, mermaidId));
+      nodeEl.addEventListener('mousemove', (e) => positionTooltip(e));
+      nodeEl.addEventListener('mouseleave', () => hideTooltip());
+
+      // Click navigation for solid (has sub-diagram) nodes
+      if (nav[mermaidId]) {
+        nodeEl.classList.add('clickable');
+        nodeEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          hideTooltip();
+          const targetDiagram = nav[mermaidId];
+          const title = meta ? meta.name : targetDiagram;
+          navigateTo(targetDiagram, title);
+        });
+      }
+    });
+
+    // Process edge labels
+    const edgeLabelEls = svgEl.querySelectorAll('.edgeLabel');
+    edgeLabelEls.forEach(labelEl => {
+      labelEl.addEventListener('mouseenter', (e) => showEdgeTooltip(e, labelEl));
+      labelEl.addEventListener('mousemove', (e) => positionTooltip(e));
+      labelEl.addEventListener('mouseleave', () => hideTooltip());
+    });
+  }
+
+  function extractNodeId(nodeEl) {
+    const id = nodeEl.id || '';
+    // mermaid v11 format: "flowchart-{nodeId}-{index}"
+    const match = id.match(/^flowchart-(.+)-\d+$/);
+    if (match) return match[1];
+    // Fallback: try data-id attribute
+    if (nodeEl.dataset && nodeEl.dataset.id) return nodeEl.dataset.id;
+    return null;
+  }
+
+  // ---- Tooltips ----
+  function showNodeTooltip(e, meta, mermaidId) {
+    if (!meta) {
+      tooltip.innerHTML = `<div class="tt-name">${escapeHtml(mermaidId)}</div>`;
+    } else {
+      const typeText = escapeHtml((meta.type || '').replace('_',' '));
+      const badge = `<span class="tt-badge ${escapeHtml(meta.type)}">${typeText}</span>`;
+      const tagHtml = meta.tag ? `<span class="tt-badge ${escapeHtml(meta.tag)}">${escapeHtml(meta.tag)}</span>` : '';
+      const updateHtml = (meta.status === 'updated' && meta.update)
+        ? `<div class="tt-update">${escapeHtml(meta.update)}</div>`
+        : '';
+      tooltip.innerHTML = `
+        <div class="tt-name">${escapeHtml(meta.name)}${badge}${tagHtml}</div>
+        ${meta.description ? `<div class="tt-desc">${escapeHtml(meta.description)}</div>` : ''}
+        ${meta.file_path ? `<div class="tt-file">${escapeHtml(meta.file_path)}::${escapeHtml(meta.function)}</div>` : ''}
+        ${updateHtml}
+      `;
+    }
+    tooltip.style.display = 'block';
+    positionTooltip(e);
+  }
+
+  function showEdgeTooltip(e, labelEl) {
+    const labelText = (labelEl.textContent || '').trim().replace(/^"|"$/g, '');
+    // Find matching edge by label text
+    let edgeMeta = null;
+    for (const [key, meta] of Object.entries(DATA.edges)) {
+      if (meta.label === labelText) {
+        edgeMeta = meta;
+        break;
+      }
+    }
+
+    if (edgeMeta) {
+      let html = `<div class="tt-edge-label">${escapeHtml(edgeMeta.label)}</div>`;
+      if (edgeMeta.description) html += `<div class="tt-desc">${escapeHtml(edgeMeta.description)}</div>`;
+      const idx = edgeMeta.index != null ? escapeHtml(edgeMeta.index) : 'N/A';
+      html += `<div class="tt-row">Index: <span>${idx}</span></div>`;
+      const cond = escapeHtml(edgeMeta.condition) || 'None';
+      html += `<div class="tt-row">Condition: <span>${cond}</span></div>`;
+      tooltip.innerHTML = html;
+    } else {
+      tooltip.innerHTML = `<div class="tt-edge-label">${escapeHtml(labelText)}</div>`;
+    }
+    tooltip.style.display = 'block';
+    positionTooltip(e);
+  }
+
+  function positionTooltip(e) {
+    const pad = 12;
+    let x = e.clientX + pad;
+    let y = e.clientY + pad;
+    // Keep tooltip within viewport
+    const rect = tooltip.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - pad;
+    if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - pad;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = 'none';
+  }
+
+  // ---- Navigation ----
+  function navigateTo(diagramName, title) {
+    navStack.push({ name: diagramName, title: title || diagramName });
+    renderDiagram(diagramName);
+    updateBreadcrumb();
+  }
+
+  function navigateBack() {
+    if (navStack.length <= 1) return;
+    navStack.pop();
+    const current = navStack[navStack.length - 1];
+    renderDiagram(current.name);
+    updateBreadcrumb();
+  }
+
+  function navigateToIndex(index) {
+    if (index >= navStack.length - 1) return; // Already here
+    navStack = navStack.slice(0, index + 1);
+    const current = navStack[navStack.length - 1];
+    renderDiagram(current.name);
+    updateBreadcrumb();
+  }
+
+  function updateBreadcrumb() {
+    backBtn.disabled = navStack.length <= 1;
+
+    let html = '';
+    navStack.forEach((item, i) => {
+      if (i > 0) html += '<span class="crumb-sep">›</span>';
+      const isCurrent = i === navStack.length - 1;
+      html += `<span class="crumb ${isCurrent ? 'current' : ''}" data-index="${i}">${escapeHtml(item.title)}</span>`;
+    });
+    breadcrumb.innerHTML = html;
+
+    // Attach click handlers
+    breadcrumb.querySelectorAll('.crumb:not(.current)').forEach(el => {
+      el.addEventListener('click', () => {
+        navigateToIndex(parseInt(el.dataset.index));
+      });
+    });
+  }
+
+  backBtn.addEventListener('click', navigateBack);
+
+  // ---- Pan ----
+  area.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    // Don't start pan if clicking a node
+    if (e.target.closest('.node')) return;
+    isPanning = true;
+    area.classList.add('panning');
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    panStartPanX = panX;
+    panStartPanY = panY;
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    panX = panStartPanX + (e.clientX - panStartX);
+    panY = panStartPanY + (e.clientY - panStartY);
+    applyTransform();
+  });
+
+  window.addEventListener('mouseup', () => {
+    isPanning = false;
+    area.classList.remove('panning');
+  });
+
+  // ---- Zoom (wheel) ----
+  area.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = area.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const factor = Math.pow(1.1, -e.deltaY / 50);
+    const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+
+    // Zoom toward mouse position
+    panX = mouseX - (mouseX - panX) * (newZoom / zoom);
+    panY = mouseY - (mouseY - panY) * (newZoom / zoom);
+    zoom = newZoom;
+
+    applyTransform();
+  }, { passive: false });
+
+  // ---- Touch: pinch zoom + pan ----
+  area.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      lastTouchCenter = getTouchCenter(e.touches);
+      lastTouchDistance = getTouchDistance(e.touches);
+    }
+  }, { passive: false });
+
+  area.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 2 || !lastTouchDistance) return;
+    e.preventDefault();
+
+    const center = getTouchCenter(e.touches);
+    const distance = getTouchDistance(e.touches);
+    const rect = area.getBoundingClientRect();
+
+    // Pinch zoom
+    const factor = distance / lastTouchDistance;
+    const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+    const anchorX = center.x - rect.left;
+    const anchorY = center.y - rect.top;
+    panX = anchorX - (anchorX - panX) * (newZoom / zoom);
+    panY = anchorY - (anchorY - panY) * (newZoom / zoom);
+    zoom = newZoom;
+
+    // Pan
+    if (lastTouchCenter) {
+      panX += center.x - lastTouchCenter.x;
+      panY += center.y - lastTouchCenter.y;
+    }
+
+    lastTouchCenter = center;
+    lastTouchDistance = distance;
+    applyTransform();
+  }, { passive: false });
+
+  area.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+      lastTouchCenter = null;
+      lastTouchDistance = null;
+    }
+  });
+
+  function getTouchCenter(touches) {
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2,
+    };
+  }
+  function getTouchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  // ---- Keyboard ----
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      navigateBack();
+    }
+  });
+})();
+</script>
+</body>
+</html>
