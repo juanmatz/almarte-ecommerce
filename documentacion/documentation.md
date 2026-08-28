@@ -96,7 +96,7 @@ Ejecutado en una de las ranuras de aplicaciones Node.js del plan de hosting. Res
 Motor relacional nativo alojado en Hostinger. Encargado de la persistencia de usuarios, productos, órdenes, reseñas e historial de envíos.
 
 #### CDN de Imágenes (Cloudinary)
-Las imágenes de todos los productos se almacenan externamente en Cloudinary. La base de datos solo guarda la URL del recurso, mitigando el límite de inodos del hosting compartido y garantizando tiempos de carga óptimos. En el panel de administración, la carga es automatizada: el cliente arrastra la imagen y el servidor la procesa mediante un proxy seguro, renombrándola automáticamente bajo una convención SEO antes de subirla a la carpeta `almarte/productos`.
+Las imágenes de todos los productos se almacenan externamente en Cloudinary. La base de datos solo guarda la URL del recurso, mitigando el límite de inodos del hosting compartido y garantizando tiempos de carga óptimos.
 
 ### 2.3. Decisiones de Infraestructura
 
@@ -254,9 +254,9 @@ El backend expone una interfaz estructurada bajo el estándar REST. Todas las re
 | `/api/admin/products` | POST *(admin)* | Crea un nuevo producto. Acepta URL de Cloudinary, precio, descuento y estado. |
 | `/api/admin/products/:id` | PATCH *(admin)* | Actualiza cualquier campo del producto (nombre, precio, descuento, disponibilidad). |
 | `/api/admin/products/:id` | DELETE *(admin)* | Elimina un producto (soft delete para preservar historial de órdenes). |
+| `/api/admin/upload` | POST *(admin)* | Sube imágenes a Cloudinary (`almarte/productos`), validando tipo MIME (JPG, PNG, WEBP) y tamaño máx. 5MB, retornando la URL segura (`secure_url`). |
 | `/api/admin/orders` | GET *(admin)* | Lista todas las órdenes con filtros por estado y rango de fechas. |
 | `/api/admin/orders/:id` | PATCH *(admin)* | Actualiza el estado de una orden manualmente (ej. a `shipped` o `cancelled`). |
-| `/api/admin/upload` | POST *(admin)* | Sube un archivo de imagen al servidor, lo procesa y lo sube directamente a Cloudinary, retornando la URL segura. |
 
 ---
 
@@ -451,7 +451,7 @@ almarte-artesanos/
 ## 10. Lista de Verificación para el Despliegue
 
 ### 10.1. Configuración del Servidor
-- [ ] Variables de entorno (`.env`): `DATABASE_URL`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (y variables de la pasarela de pagos cuando se defina).
+- [ ] Variables de entorno (`.env`): `DATABASE_URL`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
 - [ ] CORS configurado explícitamente en Express/Next.js para el dominio del frontend.
 - [ ] Certificado SSL/HTTPS activo (obligatorio para pasarelas de pago y seguridad general).
 - [ ] Configuración de Webhook/APIs de la pasarela de pagos en el entorno de producción (cuando se defina).

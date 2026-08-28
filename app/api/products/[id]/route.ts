@@ -32,6 +32,7 @@ export async function GET(
             createdAt: "desc",
           },
         },
+        images: { orderBy: { sortOrder: "asc" } },
       },
     });
 
@@ -56,6 +57,7 @@ export async function GET(
       discount_price: product.discountPrice ? Number(product.discountPrice) : undefined,
       is_available: product.isAvailable,
       image_url: product.imageUrl,
+      image_urls: [product.imageUrl, ...product.images.map((image) => image.url)],
       category: product.category,
       subcategory: product.subcategory ?? undefined,
       rating,

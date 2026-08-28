@@ -83,6 +83,7 @@ export async function GET(request: Request) {
       orderBy,
       include: {
         reviews: true,
+        images: { orderBy: { sortOrder: "asc" } },
       },
     });
 
@@ -102,6 +103,7 @@ export async function GET(request: Request) {
         discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
         is_available: p.isAvailable,
         image_url: p.imageUrl,
+        image_urls: [p.imageUrl, ...p.images.map((image) => image.url)],
         category: p.category,
         subcategory: p.subcategory ?? undefined,
         rating,

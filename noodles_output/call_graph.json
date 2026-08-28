@@ -1,0 +1,1113 @@
+{
+  "nodes": [
+    {
+      "id": "app\\admin\\layout.tsx::AdminLayout",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\layout.tsx::handleLogout",
+      "type": "start_point",
+      "line": 41,
+      "callers": [],
+      "callees": [
+        "context\\AuthContext.tsx::logout"
+      ]
+    },
+    {
+      "id": "app\\admin\\layout.tsx::isActive",
+      "type": "orphan",
+      "line": 46,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::AdminOrdenesPage",
+      "type": "start_point",
+      "line": 46,
+      "callers": [],
+      "callees": [
+        "app\\admin\\ordenes\\page.tsx::formatCOP"
+      ]
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::closeModal",
+      "type": "orphan",
+      "line": 123,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::fetchOrders",
+      "type": "orphan",
+      "line": 88,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::formatCOP",
+      "type": "end_point",
+      "line": 226,
+      "callers": [
+        "app\\admin\\ordenes\\page.tsx::AdminOrdenesPage"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::getOrderStatusBadge",
+      "type": "orphan",
+      "line": 235,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::getShipmentBadge",
+      "type": "orphan",
+      "line": 248,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::handleManageOrder",
+      "type": "orphan",
+      "line": 113,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::handleSaveShipment",
+      "type": "start_point",
+      "line": 165,
+      "callers": [],
+      "callees": [
+        "app\\admin\\ordenes\\page.tsx::showNotification"
+      ]
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::handleUpdateOrderStatus",
+      "type": "start_point",
+      "line": 132,
+      "callers": [],
+      "callees": [
+        "app\\admin\\ordenes\\page.tsx::showNotification"
+      ]
+    },
+    {
+      "id": "app\\admin\\ordenes\\page.tsx::showNotification",
+      "type": "end_point",
+      "line": 108,
+      "callers": [
+        "app\\admin\\ordenes\\page.tsx::handleSaveShipment",
+        "app\\admin\\ordenes\\page.tsx::handleUpdateOrderStatus"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\page.tsx::AdminDashboard",
+      "type": "start_point",
+      "line": 53,
+      "callers": [],
+      "callees": [
+        "app\\admin\\page.tsx::MetricCard",
+        "app\\admin\\page.tsx::formatCOP"
+      ]
+    },
+    {
+      "id": "app\\admin\\page.tsx::MetricCard",
+      "type": "end_point",
+      "line": 16,
+      "callers": [
+        "app\\admin\\page.tsx::AdminDashboard"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\page.tsx::fetchMetrics",
+      "type": "orphan",
+      "line": 60,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\page.tsx::formatCOP",
+      "type": "end_point",
+      "line": 84,
+      "callers": [
+        "app\\admin\\page.tsx::AdminDashboard"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\page.tsx::getOrderStatusBadge",
+      "type": "orphan",
+      "line": 93,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\page.tsx::getShipmentBadge",
+      "type": "orphan",
+      "line": 106,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::AdminProductosPage",
+      "type": "orphan",
+      "line": 30,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::fetchProducts",
+      "type": "end_point",
+      "line": 56,
+      "callers": [
+        "app\\admin\\productos\\page.tsx::handleSubmit"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::formatCOP",
+      "type": "orphan",
+      "line": 222,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::handleDeleteProduct",
+      "type": "start_point",
+      "line": 126,
+      "callers": [],
+      "callees": [
+        "app\\admin\\productos\\page.tsx::showNotification"
+      ]
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::handleSubmit",
+      "type": "start_point",
+      "line": 156,
+      "callers": [],
+      "callees": [
+        "app\\admin\\productos\\page.tsx::fetchProducts",
+        "app\\admin\\productos\\page.tsx::showNotification"
+      ]
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::handleToggleAvailable",
+      "type": "start_point",
+      "line": 102,
+      "callers": [],
+      "callees": [
+        "app\\admin\\productos\\page.tsx::showNotification"
+      ]
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::openCreateModal",
+      "type": "orphan",
+      "line": 76,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::openEditModal",
+      "type": "orphan",
+      "line": 89,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\admin\\productos\\page.tsx::showNotification",
+      "type": "end_point",
+      "line": 71,
+      "callers": [
+        "app\\admin\\productos\\page.tsx::handleDeleteProduct",
+        "app\\admin\\productos\\page.tsx::handleSubmit",
+        "app\\admin\\productos\\page.tsx::handleToggleAvailable"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\metrics\\route.ts::GET",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\orders\\[id]\\route.ts::PATCH",
+      "type": "orphan",
+      "line": 6,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\orders\\route.ts::GET",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\products\\[id]\\route.ts::DELETE",
+      "type": "orphan",
+      "line": 139,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\products\\[id]\\route.ts::PATCH",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\products\\route.ts::POST",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\admin\\shipments\\route.ts::POST",
+      "type": "orphan",
+      "line": 6,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\auth\\login\\route.ts::POST",
+      "type": "orphan",
+      "line": 6,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\auth\\register\\route.ts::POST",
+      "type": "orphan",
+      "line": 6,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\checkout\\guest-intent\\route.ts::POST",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\orders\\route.ts::GET",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\products\\[id]\\route.ts::GET",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\products\\[id]\\route.ts::POST",
+      "type": "orphan",
+      "line": 83,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\products\\route.ts::GET",
+      "type": "orphan",
+      "line": 4,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\api\\reviews\\[id]\\route.ts::DELETE",
+      "type": "orphan",
+      "line": 5,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\catalogo\\[categoria]\\page.tsx::CatalogSkeleton",
+      "type": "end_point",
+      "line": 73,
+      "callers": [
+        "app\\catalogo\\[categoria]\\page.tsx::CategoryCatalogPage"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\catalogo\\[categoria]\\page.tsx::CategoryCatalogPage",
+      "type": "start_point",
+      "line": 42,
+      "callers": [],
+      "callees": [
+        "app\\catalogo\\[categoria]\\page.tsx::CatalogSkeleton"
+      ]
+    },
+    {
+      "id": "app\\catalogo\\[categoria]\\page.tsx::generateMetadata",
+      "type": "orphan",
+      "line": 24,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\catalogo\\page.tsx::CatalogPage",
+      "type": "start_point",
+      "line": 14,
+      "callers": [],
+      "callees": [
+        "app\\catalogo\\page.tsx::CatalogSkeleton"
+      ]
+    },
+    {
+      "id": "app\\catalogo\\page.tsx::CatalogSkeleton",
+      "type": "end_point",
+      "line": 35,
+      "callers": [
+        "app\\catalogo\\page.tsx::CatalogPage"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\checkout\\page.tsx::CheckoutPage",
+      "type": "start_point",
+      "line": 12,
+      "callers": [],
+      "callees": [
+        "app\\checkout\\page.tsx::formatCOP"
+      ]
+    },
+    {
+      "id": "app\\checkout\\page.tsx::formatCOP",
+      "type": "end_point",
+      "line": 135,
+      "callers": [
+        "app\\checkout\\page.tsx::CheckoutPage"
+      ],
+      "callees": []
+    },
+    {
+      "id": "app\\checkout\\page.tsx::handleAccountActivation",
+      "type": "start_point",
+      "line": 114,
+      "callers": [],
+      "callees": [
+        "context\\AuthContext.tsx::register"
+      ]
+    },
+    {
+      "id": "app\\checkout\\page.tsx::handleCheckoutSubmit",
+      "type": "start_point",
+      "line": 68,
+      "callers": [],
+      "callees": [
+        "context\\CartContext.tsx::clearCart"
+      ]
+    },
+    {
+      "id": "app\\checkout\\page.tsx::handleInlineLogin",
+      "type": "start_point",
+      "line": 51,
+      "callers": [],
+      "callees": [
+        "context\\AuthContext.tsx::loginWithCredentials"
+      ]
+    },
+    {
+      "id": "app\\cuenta\\login\\page.tsx::LoginPage",
+      "type": "orphan",
+      "line": 11,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\login\\page.tsx::handleSubmit",
+      "type": "start_point",
+      "line": 20,
+      "callers": [],
+      "callees": [
+        "context\\AuthContext.tsx::loginWithCredentials"
+      ]
+    },
+    {
+      "id": "app\\cuenta\\page.tsx::CuentaPage",
+      "type": "orphan",
+      "line": 11,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\page.tsx::fetchOrders",
+      "type": "orphan",
+      "line": 26,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\page.tsx::formatCurrency",
+      "type": "orphan",
+      "line": 49,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\page.tsx::formatDate",
+      "type": "orphan",
+      "line": 58,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\registro\\page.tsx::RegisterPage",
+      "type": "orphan",
+      "line": 11,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\cuenta\\registro\\page.tsx::handleSubmit",
+      "type": "start_point",
+      "line": 21,
+      "callers": [],
+      "callees": [
+        "context\\AuthContext.tsx::register"
+      ]
+    },
+    {
+      "id": "app\\layout.tsx::RootLayout",
+      "type": "orphan",
+      "line": 24,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\page.tsx::Home",
+      "type": "orphan",
+      "line": 11,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\producto\\[id]\\page.tsx::ProductPage",
+      "type": "orphan",
+      "line": 37,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "app\\producto\\[id]\\page.tsx::generateMetadata",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\AvailabilityBadge.tsx::AvailabilityBadge",
+      "type": "end_point",
+      "line": 9,
+      "callers": [
+        "components\\ProductCard.tsx::ProductCard",
+        "components\\ProductDetails.tsx::ProductDetails"
+      ],
+      "callees": []
+    },
+    {
+      "id": "components\\CartDrawer.tsx::CartDrawer",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\CartDrawer.tsx::handleKeyDown",
+      "type": "start_point",
+      "line": 23,
+      "callers": [],
+      "callees": [
+        "context\\CartContext.tsx::closeCart"
+      ]
+    },
+    {
+      "id": "components\\CatalogContent.tsx::CatalogContent",
+      "type": "start_point",
+      "line": 25,
+      "callers": [],
+      "callees": [
+        "components\\CatalogContent.tsx::formatCOP"
+      ]
+    },
+    {
+      "id": "components\\CatalogContent.tsx::formatCOP",
+      "type": "end_point",
+      "line": 150,
+      "callers": [
+        "components\\CatalogContent.tsx::CatalogContent"
+      ],
+      "callees": []
+    },
+    {
+      "id": "components\\CatalogContent.tsx::handleResetFilters",
+      "type": "orphan",
+      "line": 130,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\Footer.tsx::Footer",
+      "type": "orphan",
+      "line": 7,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\Navbar.tsx::Navbar",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\Navbar.tsx::handleClickOutside",
+      "type": "orphan",
+      "line": 35,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\Navbar.tsx::handleScroll",
+      "type": "orphan",
+      "line": 18,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\Navbar.tsx::isActive",
+      "type": "orphan",
+      "line": 68,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\PriceDisplay.tsx::PriceDisplay",
+      "type": "process",
+      "line": 9,
+      "callers": [
+        "components\\ProductCard.tsx::ProductCard",
+        "components\\ProductDetails.tsx::ProductDetails"
+      ],
+      "callees": [
+        "components\\PriceDisplay.tsx::formatPrice"
+      ]
+    },
+    {
+      "id": "components\\PriceDisplay.tsx::formatPrice",
+      "type": "end_point",
+      "line": 10,
+      "callers": [
+        "components\\PriceDisplay.tsx::PriceDisplay"
+      ],
+      "callees": []
+    },
+    {
+      "id": "components\\ProductCard.tsx::ProductCard",
+      "type": "start_point",
+      "line": 16,
+      "callers": [],
+      "callees": [
+        "components\\AvailabilityBadge.tsx::AvailabilityBadge",
+        "components\\PriceDisplay.tsx::PriceDisplay",
+        "components\\StarRating.tsx::StarRating"
+      ]
+    },
+    {
+      "id": "components\\ProductCard.tsx::handleAddToCart",
+      "type": "start_point",
+      "line": 19,
+      "callers": [],
+      "callees": [
+        "context\\CartContext.tsx::addToCart"
+      ]
+    },
+    {
+      "id": "components\\ProductDetails.tsx::ProductDetails",
+      "type": "start_point",
+      "line": 31,
+      "callers": [],
+      "callees": [
+        "components\\AvailabilityBadge.tsx::AvailabilityBadge",
+        "components\\PriceDisplay.tsx::PriceDisplay",
+        "components\\ProductDetails.tsx::formatCOP",
+        "components\\ProductDetails.tsx::getCategoryDetails",
+        "components\\StarRating.tsx::StarRating"
+      ]
+    },
+    {
+      "id": "components\\ProductDetails.tsx::formatCOP",
+      "type": "end_point",
+      "line": 209,
+      "callers": [
+        "components\\ProductDetails.tsx::ProductDetails"
+      ],
+      "callees": []
+    },
+    {
+      "id": "components\\ProductDetails.tsx::getCategoryDetails",
+      "type": "end_point",
+      "line": 176,
+      "callers": [
+        "components\\ProductDetails.tsx::ProductDetails"
+      ],
+      "callees": []
+    },
+    {
+      "id": "components\\ProductDetails.tsx::handleAddToCart",
+      "type": "start_point",
+      "line": 67,
+      "callers": [],
+      "callees": [
+        "context\\CartContext.tsx::addToCart"
+      ]
+    },
+    {
+      "id": "components\\ProductDetails.tsx::handleDeleteReview",
+      "type": "orphan",
+      "line": 128,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\ProductDetails.tsx::handleQuantityChange",
+      "type": "orphan",
+      "line": 62,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\ProductDetails.tsx::handleSubmitReview",
+      "type": "orphan",
+      "line": 74,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "components\\StarRating.tsx::StarRating",
+      "type": "end_point",
+      "line": 9,
+      "callers": [
+        "components\\ProductCard.tsx::ProductCard",
+        "components\\ProductDetails.tsx::ProductDetails"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\AuthContext.tsx::AuthProvider",
+      "type": "orphan",
+      "line": 26,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "context\\AuthContext.tsx::login",
+      "type": "end_point",
+      "line": 49,
+      "callers": [
+        "context\\AuthContext.tsx::loginWithCredentials",
+        "context\\AuthContext.tsx::register"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\AuthContext.tsx::loginWithCredentials",
+      "type": "process",
+      "line": 63,
+      "callers": [
+        "app\\checkout\\page.tsx::handleInlineLogin",
+        "app\\cuenta\\login\\page.tsx::handleSubmit"
+      ],
+      "callees": [
+        "context\\AuthContext.tsx::login"
+      ]
+    },
+    {
+      "id": "context\\AuthContext.tsx::logout",
+      "type": "end_point",
+      "line": 56,
+      "callers": [
+        "app\\admin\\layout.tsx::handleLogout"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\AuthContext.tsx::register",
+      "type": "process",
+      "line": 85,
+      "callers": [
+        "app\\checkout\\page.tsx::handleAccountActivation",
+        "app\\cuenta\\registro\\page.tsx::handleSubmit"
+      ],
+      "callees": [
+        "context\\AuthContext.tsx::login"
+      ]
+    },
+    {
+      "id": "context\\AuthContext.tsx::useAuth",
+      "type": "orphan",
+      "line": 124,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::CartProvider",
+      "type": "orphan",
+      "line": 37,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::addToCart",
+      "type": "end_point",
+      "line": 65,
+      "callers": [
+        "components\\ProductCard.tsx::handleAddToCart",
+        "components\\ProductDetails.tsx::handleAddToCart"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::clearCart",
+      "type": "end_point",
+      "line": 96,
+      "callers": [
+        "app\\checkout\\page.tsx::handleCheckoutSubmit"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::closeCart",
+      "type": "end_point",
+      "line": 63,
+      "callers": [
+        "components\\CartDrawer.tsx::handleKeyDown"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::openCart",
+      "type": "orphan",
+      "line": 62,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::removeFromCart",
+      "type": "end_point",
+      "line": 80,
+      "callers": [
+        "context\\CartContext.tsx::updateQuantity"
+      ],
+      "callees": []
+    },
+    {
+      "id": "context\\CartContext.tsx::updateQuantity",
+      "type": "start_point",
+      "line": 84,
+      "callers": [],
+      "callees": [
+        "context\\CartContext.tsx::removeFromCart"
+      ]
+    },
+    {
+      "id": "context\\CartContext.tsx::useCart",
+      "type": "orphan",
+      "line": 127,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "lib\\auth.ts::base64UrlDecode",
+      "type": "end_point",
+      "line": 12,
+      "callers": [
+        "lib\\auth.ts::verifyJWT"
+      ],
+      "callees": []
+    },
+    {
+      "id": "lib\\auth.ts::getAuthUser",
+      "type": "start_point",
+      "line": 74,
+      "callers": [],
+      "callees": [
+        "lib\\auth.ts::verifyJWT"
+      ]
+    },
+    {
+      "id": "lib\\auth.ts::verifyJWT",
+      "type": "process",
+      "line": 26,
+      "callers": [
+        "lib\\auth.ts::getAuthUser",
+        "proxy.ts::proxy"
+      ],
+      "callees": [
+        "lib\\auth.ts::base64UrlDecode"
+      ]
+    },
+    {
+      "id": "lib\\db.ts::getDbConfig",
+      "type": "orphan",
+      "line": 9,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "prisma\\seed.ts::main",
+      "type": "orphan",
+      "line": 4,
+      "callers": [],
+      "callees": []
+    },
+    {
+      "id": "proxy.ts::proxy",
+      "type": "start_point",
+      "line": 5,
+      "callers": [],
+      "callees": [
+        "lib\\auth.ts::verifyJWT"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "app\\admin\\layout.tsx::handleLogout",
+      "to": "context\\AuthContext.tsx::logout",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\ordenes\\page.tsx::AdminOrdenesPage",
+      "to": "app\\admin\\ordenes\\page.tsx::formatCOP",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\ordenes\\page.tsx::handleSaveShipment",
+      "to": "app\\admin\\ordenes\\page.tsx::showNotification",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\ordenes\\page.tsx::handleUpdateOrderStatus",
+      "to": "app\\admin\\ordenes\\page.tsx::showNotification",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\page.tsx::AdminDashboard",
+      "to": "app\\admin\\page.tsx::MetricCard",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\page.tsx::AdminDashboard",
+      "to": "app\\admin\\page.tsx::formatCOP",
+      "is_returned": true,
+      "index": 1
+    },
+    {
+      "from": "app\\admin\\productos\\page.tsx::handleDeleteProduct",
+      "to": "app\\admin\\productos\\page.tsx::showNotification",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\productos\\page.tsx::handleSubmit",
+      "to": "app\\admin\\productos\\page.tsx::showNotification",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\admin\\productos\\page.tsx::handleSubmit",
+      "to": "app\\admin\\productos\\page.tsx::fetchProducts",
+      "is_returned": false,
+      "index": 1
+    },
+    {
+      "from": "app\\admin\\productos\\page.tsx::handleToggleAvailable",
+      "to": "app\\admin\\productos\\page.tsx::showNotification",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\catalogo\\[categoria]\\page.tsx::CategoryCatalogPage",
+      "to": "app\\catalogo\\[categoria]\\page.tsx::CatalogSkeleton",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\catalogo\\page.tsx::CatalogPage",
+      "to": "app\\catalogo\\page.tsx::CatalogSkeleton",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\checkout\\page.tsx::CheckoutPage",
+      "to": "app\\checkout\\page.tsx::formatCOP",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\checkout\\page.tsx::handleAccountActivation",
+      "to": "context\\AuthContext.tsx::register",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\checkout\\page.tsx::handleCheckoutSubmit",
+      "to": "context\\CartContext.tsx::clearCart",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "app\\checkout\\page.tsx::handleInlineLogin",
+      "to": "context\\AuthContext.tsx::loginWithCredentials",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\cuenta\\login\\page.tsx::handleSubmit",
+      "to": "context\\AuthContext.tsx::loginWithCredentials",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "app\\cuenta\\registro\\page.tsx::handleSubmit",
+      "to": "context\\AuthContext.tsx::register",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "components\\CartDrawer.tsx::handleKeyDown",
+      "to": "context\\CartContext.tsx::closeCart",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "components\\CatalogContent.tsx::CatalogContent",
+      "to": "components\\CatalogContent.tsx::formatCOP",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "components\\PriceDisplay.tsx::PriceDisplay",
+      "to": "components\\PriceDisplay.tsx::formatPrice",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "components\\ProductCard.tsx::ProductCard",
+      "to": "components\\AvailabilityBadge.tsx::AvailabilityBadge",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "components\\ProductCard.tsx::ProductCard",
+      "to": "components\\StarRating.tsx::StarRating",
+      "is_returned": true,
+      "index": 1
+    },
+    {
+      "from": "components\\ProductCard.tsx::ProductCard",
+      "to": "components\\PriceDisplay.tsx::PriceDisplay",
+      "is_returned": true,
+      "index": 2
+    },
+    {
+      "from": "components\\ProductCard.tsx::handleAddToCart",
+      "to": "context\\CartContext.tsx::addToCart",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "components\\ProductDetails.tsx::ProductDetails",
+      "to": "components\\ProductDetails.tsx::getCategoryDetails",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "components\\ProductDetails.tsx::ProductDetails",
+      "to": "components\\AvailabilityBadge.tsx::AvailabilityBadge",
+      "is_returned": true,
+      "index": 1
+    },
+    {
+      "from": "components\\ProductDetails.tsx::ProductDetails",
+      "to": "components\\StarRating.tsx::StarRating",
+      "is_returned": true,
+      "index": 2
+    },
+    {
+      "from": "components\\ProductDetails.tsx::ProductDetails",
+      "to": "components\\PriceDisplay.tsx::PriceDisplay",
+      "is_returned": true,
+      "index": 3
+    },
+    {
+      "from": "components\\ProductDetails.tsx::ProductDetails",
+      "to": "components\\ProductDetails.tsx::formatCOP",
+      "is_returned": true,
+      "index": 4
+    },
+    {
+      "from": "components\\ProductDetails.tsx::handleAddToCart",
+      "to": "context\\CartContext.tsx::addToCart",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "context\\AuthContext.tsx::loginWithCredentials",
+      "to": "context\\AuthContext.tsx::login",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "context\\AuthContext.tsx::register",
+      "to": "context\\AuthContext.tsx::login",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "context\\CartContext.tsx::updateQuantity",
+      "to": "context\\CartContext.tsx::removeFromCart",
+      "is_returned": false,
+      "index": 0
+    },
+    {
+      "from": "lib\\auth.ts::getAuthUser",
+      "to": "lib\\auth.ts::verifyJWT",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "lib\\auth.ts::verifyJWT",
+      "to": "lib\\auth.ts::base64UrlDecode",
+      "is_returned": true,
+      "index": 0
+    },
+    {
+      "from": "proxy.ts::proxy",
+      "to": "lib\\auth.ts::verifyJWT",
+      "is_returned": true,
+      "index": 0
+    }
+  ]
+}
