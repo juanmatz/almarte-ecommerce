@@ -13,6 +13,7 @@ interface Product {
   discount_price?: number;
   is_available: boolean;
   image_url: string;
+  image_urls?: string[];
   category: string;
   subcategory?: string;
   rating?: number;
@@ -44,6 +45,7 @@ export default function AdminProductosPage() {
   const [formPrice, setFormPrice] = useState("");
   const [formDiscountPrice, setFormDiscountPrice] = useState("");
   const [formImageUrl, setFormImageUrl] = useState("");
+  const [formImageUrls, setFormImageUrls] = useState<string[]>([]);
   const [formCategory, setFormCategory] = useState("accesorios");
   const [formSubcategory, setFormSubcategory] = useState("");
   const [formIsAvailable, setFormIsAvailable] = useState(true);
@@ -85,7 +87,11 @@ export default function AdminProductosPage() {
         throw new Error(data.error || "Fallo la subida de la imagen.");
       }
 
-      setFormImageUrl(data.url);
+      if (!formImageUrl) {
+        setFormImageUrl(data.url);
+      } else {
+        setFormImageUrls((current) => [...current, data.url]);
+      }
       showNotification("Imagen subida exitosamente a Cloudinary.", "success");
     } catch (err: any) {
       console.error(err);
@@ -148,6 +154,7 @@ export default function AdminProductosPage() {
     setFormPrice("");
     setFormDiscountPrice("");
     setFormImageUrl("https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop");
+    setFormImageUrls([]);
     setFormCategory("accesorios");
     setFormSubcategory("Collares");
     setFormIsAvailable(true);
@@ -161,6 +168,7 @@ export default function AdminProductosPage() {
     setFormPrice(product.price.toString());
     setFormDiscountPrice(product.discount_price ? product.discount_price.toString() : "");
     setFormImageUrl(product.image_url);
+    setFormImageUrls((product.image_urls || []).slice(1));
     setFormCategory(product.category);
     setFormSubcategory(product.subcategory || "");
     setFormIsAvailable(product.is_available);
@@ -251,6 +259,7 @@ export default function AdminProductosPage() {
       price: priceNum,
       discountPrice: discountPriceNum || null,
       imageUrl: formImageUrl,
+      imageUrls: formImageUrls,
       category: formCategory,
       subcategory: selectedSubcategory || null,
       isAvailable: formIsAvailable,
@@ -589,36 +598,35 @@ export default function AdminProductosPage() {
 
                     {formImageUrl ? (
                       /* Preview with Option to Remove / Replace */
-                      <div className="relative rounded-lg border border-divider overflow-hidden bg-surface/30 p-2 flex items-center gap-4">
-                        <div className="relative h-20 w-20 rounded-md overflow-hidden bg-stone-100 shrink-0 border border-divider">
-                          <Image
-                            src={formImageUrl}
-                            alt="Vista previa del producto"
-                            fill
-                            sizes="80px"
-                            className="object-cover object-center"
-                          />
+                      <div className="relative rounded-lg border border-divider overflow-hidden bg-surface/30 p-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                          {[formImageUrl, ...formImageUrls].map((url, index) => (
+                            <div key={`${url}-${index}`} className="relative aspect-square rounded-md overflow-hidden bg-stone-100 border border-divider group">
+                              <Image src={url} alt={`${formName || "Producto"} - foto ${index + 1}`} fill sizes="100px" className="object-cover object-center" />
+                              <button
+                                type="button"
+                                aria-label={`Quitar foto ${index + 1}`}
+                                onClick={() => {
+                                  if (index === 0) {
+                                    setFormImageUrl(formImageUrls[0] || "");
+                                    setFormImageUrls((current) => current.slice(1));
+                                  } else {
+                                    setFormImageUrls((current) => current.filter((_, imageIndex) => imageIndex !== index - 1));
+                                  }
+                                }}
+                                className="absolute top-1 right-1 rounded-full bg-stone-900/75 p-1 text-white opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                              {index === 0 && <span className="absolute bottom-0 inset-x-0 bg-stone-900/70 px-1 py-0.5 text-center text-[8px] font-bold uppercase text-white">Portada</span>}
+                            </div>
+                          ))}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-title truncate">{formName || "Imagen del Producto"}</p>
-                          <p className="text-[10px] text-text-secondary truncate mt-0.5">{formImageUrl}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
-                            >
-                              Cambiar foto
-                            </button>
-                            <span className="text-text-secondary/40">•</span>
-                            <button
-                              type="button"
-                              onClick={() => setFormImageUrl("")}
-                              className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
-                            >
-                              Quitar foto
-                            </button>
-                          </div>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={formImageUrls.length >= 5} className="text-[11px] font-bold text-primary hover:underline cursor-pointer disabled:text-text-secondary disabled:no-underline">
+                            Añadir otra foto
+                          </button>
+                          <span className="text-[10px] text-text-secondary">{1 + formImageUrls.length}/6 fotos</span>
                         </div>
                       </div>
                     ) : (
@@ -663,11 +671,16 @@ export default function AdminProductosPage() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/webp"
+                      multiple
                       className="hidden"
                       onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleFileUpload(e.target.files[0]);
+                        if (e.target.files) {
+                          Array.from(e.target.files).slice(0, 6 - (formImageUrl ? 1 + formImageUrls.length : formImageUrls.length)).reduce(
+                            (chain, file) => chain.then(() => handleFileUpload(file)),
+                            Promise.resolve()
+                          );
                         }
+                        e.target.value = "";
                       }}
                     />
 

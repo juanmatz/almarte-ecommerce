@@ -36,6 +36,7 @@ export async function PATCH(
       imageUrl,
       category,
       subcategory,
+      imageUrls,
     } = body;
 
     // 3. Find if product exists
@@ -110,10 +111,21 @@ export async function PATCH(
       updateData.subcategory = subcategory || null;
     }
 
+    if (imageUrls !== undefined) {
+      if (!Array.isArray(imageUrls) || imageUrls.length > 5 || imageUrls.some((url) => typeof url !== "string" || !url)) {
+        return NextResponse.json({ error: "Cada producto puede tener como máximo 6 imágenes." }, { status: 400 });
+      }
+      await prisma.productImage.deleteMany({ where: { productId } });
+      await prisma.productImage.createMany({
+        data: imageUrls.map((url: string, index: number) => ({ productId, url, sortOrder: index + 1 })),
+      });
+    }
+
     // 5. Update in DB
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: updateData,
+      include: { images: { orderBy: { sortOrder: "asc" } } },
     });
 
     return NextResponse.json(

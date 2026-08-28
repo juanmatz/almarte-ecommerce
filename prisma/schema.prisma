@@ -54,8 +54,21 @@ model Product {
   createdAt     DateTime    @default(now()) @map("created_at")
   orderItems    OrderItem[]
   reviews       Review[]
+  images        ProductImage[]
 
   @@map("products")
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int      @map("product_id")
+  url       String   @db.VarChar(500)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
 }
 
 model Order {

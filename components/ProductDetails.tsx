@@ -33,6 +33,7 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
   
   // Client state to support real-time review additions
   const [product, setProduct] = useState<ProductWithReviews>(initialProduct);
+  const [activeImage, setActiveImage] = useState(initialProduct.image_url);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "energy" | "care">("description");
   
@@ -240,7 +241,7 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
         <div className="space-y-4">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-divider bg-bg-secondary shadow-xs group">
             <Image
-              src={product.image_url}
+              src={activeImage}
               alt={product.name}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -258,30 +259,24 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
             </div>
           </div>
 
-          {/* Secondary angles / decorative thumbnails */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="relative aspect-square border border-primary/45 rounded-lg overflow-hidden bg-bg-secondary cursor-pointer">
-              <Image
-                src={product.image_url}
-                alt={`${product.name} - Detalle`}
-                fill
-                className="object-cover object-center brightness-95"
-              />
-            </div>
-            <div className="relative aspect-square border border-divider/60 rounded-lg overflow-hidden bg-bg-secondary opacity-60 hover:opacity-100 transition cursor-pointer">
-              <Image
-                src={product.image_url}
-                alt={`${product.name} - Empaque`}
-                fill
-                className="object-cover object-center scale-95"
-              />
-            </div>
-            <div className="relative aspect-square border border-divider/60 rounded-lg overflow-hidden bg-bg-secondary opacity-60 hover:opacity-100 transition cursor-pointer flex items-center justify-center">
-              <div className="text-center p-2 space-y-1">
-                <Sparkles className="h-5 w-5 text-primary mx-auto" />
-                <span className="block text-[8px] font-bold uppercase tracking-wider text-text-secondary">Artesanal</span>
-              </div>
-            </div>
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+            {(product.image_urls || [product.image_url]).map((imageUrl, index) => (
+              <button
+                type="button"
+                key={`${imageUrl}-${index}`}
+                onClick={() => setActiveImage(imageUrl)}
+                aria-label={`Ver foto ${index + 1}`}
+                className={`relative aspect-square overflow-hidden rounded-lg border bg-bg-secondary cursor-pointer transition ${activeImage === imageUrl ? "border-primary ring-1 ring-primary" : "border-divider/60 opacity-70 hover:opacity-100"}`}
+              >
+                <Image
+                  src={imageUrl}
+                  alt={`${product.name} - Foto ${index + 1}`}
+                  fill
+                  sizes="100px"
+                  className="object-cover object-center"
+                />
+              </button>
+            ))}
           </div>
         </div>
 

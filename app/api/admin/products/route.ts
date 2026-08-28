@@ -24,9 +24,15 @@ export async function POST(request: Request) {
       imageUrl,
       category,
       subcategory,
+      imageUrls,
     } = body;
 
     // 3. Validation
+    const additionalImageUrls = Array.isArray(imageUrls) ? imageUrls.filter((url: unknown): url is string => typeof url === "string" && url.length > 0) : [];
+    if (additionalImageUrls.length > 5) {
+      return NextResponse.json({ error: "Cada producto puede tener como máximo 6 imágenes." }, { status: 400 });
+    }
+
     if (!name || !price || !imageUrl || !category) {
       return NextResponse.json(
         { error: "Faltan campos obligatorios (nombre, precio, imagen o categoría)" },
@@ -62,7 +68,11 @@ export async function POST(request: Request) {
         imageUrl,
         category,
         subcategory: subcategory || null,
+        images: {
+          create: additionalImageUrls.map((url, index) => ({ url, sortOrder: index + 1 })),
+        },
       },
+      include: { images: { orderBy: { sortOrder: "asc" } } },
     });
 
     return NextResponse.json(
