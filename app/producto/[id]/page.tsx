@@ -6,6 +6,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 
+// Prevent static prerendering — this page queries the database at request time
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>;
 }) {

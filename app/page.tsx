@@ -8,6 +8,9 @@ import CartDrawer from "@/components/CartDrawer";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/db";
 
+// Prevent static prerendering — this page queries the database at request time
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   // Direct Server Side database query for featured products
   const products = await prisma.product.findMany({
