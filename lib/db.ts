@@ -6,19 +6,31 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 let prisma: PrismaClient;
 
 // Parse credentials from DATABASE_URL
+// Uses regex instead of new URL() to handle passwords with special characters (/, +, =)
 const getDbConfig = () => {
   const urlString = process.env.DATABASE_URL;
   if (!urlString) {
     throw new Error("DATABASE_URL is not defined in environment variables");
   }
-  
-  const dbUrl = new URL(urlString);
+
+  // Pattern: protocol://user:password@host:port/database
+  const match = urlString.match(
+    /^(?:mysql|mariadb):\/\/([^:]+):(.+)@([^:\/]+):?(\d+)?\/(.+)$/
+  );
+
+  if (!match) {
+    throw new Error(
+      "DATABASE_URL format is invalid. Expected: mysql://user:password@host:port/database"
+    );
+  }
+
+  const [, user, password, host, port, database] = match;
   return {
-    host: dbUrl.hostname,
-    port: dbUrl.port ? parseInt(dbUrl.port) : 3306,
-    user: dbUrl.username,
-    password: decodeURIComponent(dbUrl.password),
-    database: dbUrl.pathname.replace("/", ""),
+    host,
+    port: port ? parseInt(port) : 3306,
+    user: decodeURIComponent(user),
+    password: decodeURIComponent(password),
+    database,
   };
 };
 
