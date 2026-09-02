@@ -81,11 +81,21 @@ export async function GET(request: Request) {
       orderBy = { createdAt: "desc" };
     }
 
+    // Optional pagination
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+    const page = pageParam ? Math.max(1, parseInt(pageParam) || 1) : 1;
+    const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam) || 20)) : undefined;
+    const skip = limit ? (page - 1) * limit : undefined;
+
     const products = await prisma.product.findMany({
       where,
       orderBy,
+      ...(limit ? { take: limit, skip } : {}),
       include: {
-        reviews: true,
+        reviews: {
+          select: { rating: true },
+        },
         images: { orderBy: { sortOrder: "asc" } },
       },
     });

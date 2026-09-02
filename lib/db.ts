@@ -50,7 +50,7 @@ function createPrismaClient(): PrismaClient {
     try {
       const adapter = new PrismaMariaDb({
         ...config,
-        connectionLimit: process.env.NODE_ENV === "production" ? 15 : 5,
+        connectionLimit: process.env.NODE_ENV === "production" ? 10 : 5,
         allowPublicKeyRetrieval: true,
         connectTimeout: 3000,
         acquireTimeout: 3000,
