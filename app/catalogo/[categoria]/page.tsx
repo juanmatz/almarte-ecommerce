@@ -21,6 +21,8 @@ const CATEGORY_TITLES: { [key: string]: string } = {
   "rituales-y-bienestar": "Rituales y Bienestar | Almarte",
 };
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(props: {
   params: Promise<{ categoria: string }>;
 }) {

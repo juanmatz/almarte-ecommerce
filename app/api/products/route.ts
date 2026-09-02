@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { mockProducts } from "@/data/mockProducts";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    const category = searchParams.get("category");
-    const subcategory = searchParams.get("subcategory");
-    const minPrice = searchParams.get("minPrice");
-    const maxPrice = searchParams.get("maxPrice");
-    const isAvailable = searchParams.get("isAvailable");
-    const sort = searchParams.get("sort");
+  const { searchParams } = new URL(request.url);
+  
+  const category = searchParams.get("category");
+  const subcategory = searchParams.get("subcategory");
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+  const isAvailable = searchParams.get("isAvailable");
+  const sort = searchParams.get("sort");
+  const search = searchParams.get("search");
 
+  try {
     // Build Prisma query filters
     const where: any = {};
     const andConditions: any[] = [];
@@ -29,7 +33,6 @@ export async function GET(request: Request) {
     }
 
     // Free text search (name and description)
-    const search = searchParams.get("search");
     if (search) {
       andConditions.push({
         OR: [
@@ -113,10 +116,51 @@ export async function GET(request: Request) {
 
     return NextResponse.json(formattedProducts, { status: 200 });
   } catch (error) {
-    console.error("Error al obtener productos:", error);
-    return NextResponse.json(
-      { error: "Error interno al consultar catálogo" },
-      { status: 500 }
-    );
+    console.warn("API products: Database unreachable, returning filtered mock products:", error);
+
+    // Filter mockProducts gracefully
+    let filtered = [...mockProducts];
+
+    if (category) {
+      const normalizedCategory = category.toLowerCase().replace(/-/g, "");
+      filtered = filtered.filter((p) => {
+        const pCat = p.category.toLowerCase().replace(/-/g, "");
+        return pCat.includes(normalizedCategory) || normalizedCategory.includes(pCat);
+      });
+    }
+
+    if (subcategory) {
+      filtered = filtered.filter((p) => p.subcategory?.toLowerCase() === subcategory.toLowerCase());
+    }
+
+    if (isAvailable === "true") {
+      filtered = filtered.filter((p) => p.is_available);
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          (p.description && p.description.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (minPrice || maxPrice) {
+      const min = minPrice ? parseFloat(minPrice) : 0;
+      const max = maxPrice ? parseFloat(maxPrice) : 99999999;
+      filtered = filtered.filter((p) => {
+        const effectivePrice = p.discount_price ?? p.price;
+        return effectivePrice >= min && effectivePrice <= max;
+      });
+    }
+
+    if (sort === "price-asc") {
+      filtered.sort((a, b) => (a.discount_price ?? a.price) - (b.discount_price ?? b.price));
+    } else if (sort === "price-desc") {
+      filtered.sort((a, b) => (b.discount_price ?? b.price) - (a.discount_price ?? a.price));
+    }
+
+    return NextResponse.json(filtered, { status: 200 });
   }
 }

@@ -7,30 +7,44 @@ import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/db";
+import { mockProducts } from "@/data/mockProducts";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // Direct Server Side database query for featured products
-  const products = await prisma.product.findMany({
-    take: 4,
-    where: { isAvailable: true },
-    orderBy: { createdAt: "desc" },
-  });
+  // Server Side query for featured products with safe fallback
+  let featuredProducts: any[] = [];
 
-  // Convert decimal properties to number and camelCase to snake_case for safe Client Component passing
-  const featuredProducts = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description ?? undefined,
-    price: Number(p.price),
-    discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
-    is_available: p.isAvailable,
-    image_url: p.imageUrl,
-    category: p.category,
-    subcategory: p.subcategory ?? undefined,
-    // Add default review data for visual rendering
-    rating: 4.8,
-    reviewCount: 15,
-  }));
+  try {
+    const products = await prisma.product.findMany({
+      take: 4,
+      where: { isAvailable: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (products.length > 0) {
+      featuredProducts = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description ?? undefined,
+        price: Number(p.price),
+        discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
+        is_available: p.isAvailable,
+        image_url: p.imageUrl,
+        category: p.category,
+        subcategory: p.subcategory ?? undefined,
+        rating: 4.8,
+        reviewCount: 15,
+      }));
+    }
+  } catch (error) {
+    console.warn("Home: Database unreachable, loading mock products fallback:", error);
+  }
+
+  // If database returned no products or threw connection error, use mock products
+  if (featuredProducts.length === 0) {
+    featuredProducts = mockProducts.slice(0, 4);
+  }
 
   const categories = [
     {

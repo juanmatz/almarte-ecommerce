@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "seed": "tsx prisma/seed.ts",
     "lint": "eslint"
   },
   "dependencies": {
@@ -31,17 +32,10 @@
     "eslint-config-next": "16.2.6",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
-  },
   "prisma": {
-    "seed": "bun prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   }
 }
