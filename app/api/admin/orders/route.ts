@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       id: order.id,
       total: Number(order.total),
       status: order.status,
-      shippingAddress: JSON.parse(order.shippingAddress),
+      shippingAddress: (() => { try { return JSON.parse(order.shippingAddress); } catch { return { raw: order.shippingAddress }; } })(),
       createdAt: order.createdAt.toISOString(),
       user: {
         name: order.user.name,
