@@ -27,8 +27,42 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1.1 Sanitize and validate text field lengths
+    const trimmedName = String(name).trim();
+    const trimmedEmail = String(email).trim();
+    const trimmedDocumentId = String(documentId).trim();
+    const trimmedPhone = String(phone).trim();
+    const trimmedCity = String(city).trim();
+    const trimmedAddress = String(address).trim();
+
+    if (trimmedName.length > 100 || trimmedEmail.length > 150 || trimmedDocumentId.length > 20 ||
+        trimmedPhone.length > 20 || trimmedCity.length > 100 || trimmedAddress.length > 500) {
+      return NextResponse.json(
+        { error: "Uno o más campos exceden la longitud máxima permitida." },
+        { status: 400 }
+      );
+    }
+
+    // 1.2 Validate items array length and quantities
+    if (items.length > 20) {
+      return NextResponse.json(
+        { error: "El carrito no puede contener más de 20 productos distintos." },
+        { status: 400 }
+      );
+    }
+
+    for (const item of items) {
+      const qty = Number(item.quantity);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
+        return NextResponse.json(
+          { error: "La cantidad de cada producto debe ser un número entero entre 1 y 99." },
+          { status: 400 }
+        );
+      }
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       return NextResponse.json(
         { error: "El correo electrónico no es válido." },
         { status: 400 }
@@ -78,17 +112,17 @@ export async function POST(request: Request) {
 
     // 4. Find or Create User (Hybrid Approach B)
     let user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: trimmedEmail.toLowerCase() },
     });
 
     if (!user) {
       // Create guest user
       user = await prisma.user.create({
         data: {
-          name,
-          email: email.toLowerCase(),
+          name: trimmedName,
+          email: trimmedEmail.toLowerCase(),
           passwordHash: null,
-          documentId,
+          documentId: trimmedDocumentId,
           isGuest: true,
           role: "customer",
         },
@@ -100,18 +134,18 @@ export async function POST(request: Request) {
         user = await prisma.user.update({
           where: { id: user.id },
           data: {
-            name,
-            documentId: documentId || user.documentId,
+            name: trimmedName,
+            documentId: trimmedDocumentId || user.documentId,
           },
         });
         console.log(`Usuario invitado actualizado: ${user.email}`);
       } else {
         // If user is a registered user, we let them check out under their profile!
         // We might also save/update their documentId if they don't have it
-        if (!user.documentId && documentId) {
+        if (!user.documentId && trimmedDocumentId) {
           user = await prisma.user.update({
             where: { id: user.id },
-            data: { documentId },
+            data: { documentId: trimmedDocumentId },
           });
         }
         console.log(`Orden asociada a usuario registrado existente: ${user.email}`);
@@ -120,9 +154,9 @@ export async function POST(request: Request) {
 
     // 5. Create Order and items in a transaction
     const shippingAddressJson = JSON.stringify({
-      city,
-      address,
-      phone,
+      city: trimmedCity,
+      address: trimmedAddress,
+      phone: trimmedPhone,
     });
 
     const order = await prisma.order.create({
