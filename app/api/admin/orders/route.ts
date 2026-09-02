@@ -13,9 +13,17 @@ export async function GET(request: Request) {
       );
     }
 
-    // 2. Fetch all orders with associated items, products, user, and shipment
+    // 2. Fetch orders with associated items, products, user, and shipment (with optional pagination)
+    const { searchParams } = new URL(request.url);
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+    const page = pageParam ? Math.max(1, parseInt(pageParam) || 1) : 1;
+    const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam) || 50)) : undefined;
+    const skip = limit ? (page - 1) * limit : undefined;
+
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
+      ...(limit ? { take: limit, skip } : {}),
       include: {
         user: {
           select: {
@@ -42,7 +50,7 @@ export async function GET(request: Request) {
       id: order.id,
       total: Number(order.total),
       status: order.status,
-      shippingAddress: JSON.parse(order.shippingAddress),
+      shippingAddress: (() => { try { return JSON.parse(order.shippingAddress); } catch { return { raw: order.shippingAddress }; } })(),
       createdAt: order.createdAt.toISOString(),
       user: {
         name: order.user.name,

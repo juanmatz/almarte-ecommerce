@@ -96,7 +96,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error en upload:", error);
     return NextResponse.json(
-      { error: error.message || "Error interno al procesar la subida de la imagen." },
+      { error: "Error interno al procesar la subida de la imagen." },
       { status: 500 }
     );
   }

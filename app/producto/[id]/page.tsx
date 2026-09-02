@@ -1,6 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { mockProducts } from "@/data/mockProducts";
 import ProductDetails from "@/components/ProductDetails";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,29 +13,47 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await props.params;
-  const productId = parseInt(id);
+  try {
+    const { id } = await props.params;
+    const productId = parseInt(id);
 
-  if (isNaN(productId)) {
+    if (isNaN(productId)) {
+      return {
+        title: "Producto no encontrado | Almarte",
+      };
+    }
+
+    let product: any = null;
+    try {
+      product = await prisma.product.findUnique({
+        where: { id: productId },
+      });
+    } catch (e) {
+      console.warn("Product metadata: DB unreachable, falling back to mockProducts:", e);
+    }
+
+    if (!product) {
+      const mock = mockProducts.find((p) => p.id === productId);
+      if (mock) {
+        return {
+          title: `${mock.name} | Almarte Artesanos`,
+          description: mock.description || `Encuentra ${mock.name} en Almarte.`,
+        };
+      }
+      return {
+        title: "Producto no encontrado | Almarte",
+      };
+    }
+
     return {
-      title: "Producto no encontrado | Almarte",
+      title: `${product.name} | Almarte Artesanos`,
+      description: product.description || `Encuentra ${product.name} y más artículos hechos a mano cargados de intenciones en Almarte.`,
+    };
+  } catch (err) {
+    return {
+      title: "Producto | Almarte Artesanos",
     };
   }
-
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-  });
-
-  if (!product) {
-    return {
-      title: "Producto no encontrado | Almarte",
-    };
-  }
-
-  return {
-    title: `${product.name} | Almarte Artesanos`,
-    description: product.description || `Encuentra ${product.name} y más artículos hechos a mano cargados de intenciones en Almarte.`,
-  };
 }
 
 export default async function ProductPage(props: {
@@ -47,39 +66,71 @@ export default async function ProductPage(props: {
     notFound();
   }
 
-  // Direct server query to fetch the product and its reviews
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    include: {
-      reviews: {
-        include: {
-          user: {
-            select: {
-              name: true,
+  let product: any = null;
+  let reviews: any[] = [];
+  let images: any[] = [];
+
+  try {
+    product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        reviews: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
             },
           },
+          orderBy: {
+            createdAt: "desc",
+          },
         },
-        orderBy: {
-          createdAt: "desc",
+        images: {
+          orderBy: {
+            sortOrder: "asc",
+          },
         },
       },
-      images: {
-        orderBy: {
-          sortOrder: "asc",
-        },
-      },
-    },
-  });
+    });
+
+    if (product) {
+      reviews = product.reviews || [];
+      images = product.images || [];
+    }
+  } catch (error) {
+    console.warn("ProductPage: Database unreachable, checking mockProducts:", error);
+  }
+
+  // Fallback to mock product if DB didn't return one or failed
+  if (!product) {
+    const mock = mockProducts.find((p) => p.id === productId);
+    if (mock) {
+      product = {
+        id: mock.id,
+        name: mock.name,
+        description: mock.description,
+        price: mock.price,
+        discountPrice: mock.discount_price,
+        isAvailable: mock.is_available,
+        imageUrl: mock.image_url,
+        category: mock.category,
+        subcategory: mock.subcategory,
+      };
+      reviews = [];
+      images = [];
+    }
+  }
 
   if (!product) {
     notFound();
   }
 
   // Format the product object for client serialization
-  const reviewCount = product.reviews.length;
-  // Default to 4.8 if there are no reviews to match mock visual design
+  const reviewCount = reviews.length;
+  // Default to 4.8 if there are no reviews to match visual design
   const rating = reviewCount > 0
-    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
+    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
     : 4.8;
 
   const formattedProduct = {
@@ -90,17 +141,17 @@ export default async function ProductPage(props: {
     discount_price: product.discountPrice ? Number(product.discountPrice) : undefined,
     is_available: product.isAvailable,
     image_url: product.imageUrl,
-    image_urls: [product.imageUrl, ...product.images.map((image) => image.url)],
+    image_urls: [product.imageUrl, ...images.map((image) => image.url)],
     category: product.category,
     subcategory: product.subcategory ?? undefined,
     rating,
     reviewCount,
-    reviews: product.reviews.map((r) => ({
+    reviews: reviews.map((r) => ({
       id: r.id,
       userId: r.userId,
       rating: r.rating,
       comment: r.comment,
-      createdAt: r.createdAt.toISOString(),
+      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
       userName: r.user?.name ?? "Usuario Anónimo",
     })),
   };
