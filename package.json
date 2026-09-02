@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "seed": "tsx prisma/seed.ts",
+    "create-admin": "tsx scripts/create-admin.ts",
     "lint": "eslint"
   },
   "dependencies": {
