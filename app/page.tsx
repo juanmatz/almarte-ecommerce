@@ -11,6 +11,9 @@ import { mockProducts } from "@/data/mockProducts";
 
 export const dynamic = "force-dynamic";
 
+// Prevent static prerendering — this page queries the database at request time
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   // Server Side query for featured products with safe fallback
   let featuredProducts: any[] = [];

@@ -3,14 +3,32 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-// Parse credentials safely from DATABASE_URL
+// Parse credentials from DATABASE_URL safely
+// Uses regex to support passwords with special characters (+, /, =, etc.)
 const getDbConfig = () => {
   const urlString = process.env.DATABASE_URL;
   if (!urlString) {
     return null;
   }
-  
+
   try {
+    // Pattern: protocol://user:password@host:port/database
+    const match = urlString.match(
+      /^(?:mysql|mariadb):\/\/([^:]+):(.+)@([^:\/]+):?(\d+)?\/(.+)$/
+    );
+
+    if (match) {
+      const [, user, password, host, port, database] = match;
+      return {
+        host,
+        port: port ? parseInt(port) : 3306,
+        user: decodeURIComponent(user),
+        password: decodeURIComponent(password),
+        database: database.split("?")[0],
+      };
+    }
+
+    // Fallback standard URL parser
     const dbUrl = new URL(urlString);
     return {
       host: dbUrl.hostname || "127.0.0.1",

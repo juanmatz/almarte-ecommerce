@@ -14,6 +14,20 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-mariadb", "mariadb"],
+  async redirects() {
+    return [
+      {
+        source: "/catalog",
+        destination: "/catalogo",
+        permanent: true,
+      },
+      {
+        source: "/catalog/:path*",
+        destination: "/catalogo/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
