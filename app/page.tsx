@@ -7,14 +7,14 @@ import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/db";
-import { mockProducts } from "@/data/mockProducts";
+import { mockProducts, type MockProduct } from "@/data/mockProducts";
 
 // Prevent static prerendering — this page queries the database at request time
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   // Server Side query for featured products with safe fallback
-  let featuredProducts: any[] = [];
+  let featuredProducts: MockProduct[] = [];
 
   try {
     const products = await prisma.product.findMany({
