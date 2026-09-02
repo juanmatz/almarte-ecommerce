@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth";
+import { mockProducts } from "@/data/mockProducts";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let productId = NaN;
   try {
     const { id } = await params;
-    const productId = parseInt(id);
+    productId = parseInt(id);
 
     if (isNaN(productId)) {
       return NextResponse.json(
@@ -37,6 +41,12 @@ export async function GET(
     });
 
     if (!product) {
+      // Check mock products fallback
+      const mock = mockProducts.find((p) => p.id === productId);
+      if (mock) {
+        return NextResponse.json(mock, { status: 200 });
+      }
+
       return NextResponse.json(
         { error: "Producto no encontrado" },
         { status: 404 }
@@ -74,9 +84,17 @@ export async function GET(
 
     return NextResponse.json(formattedProduct, { status: 200 });
   } catch (error) {
-    console.error("Error al obtener detalle del producto:", error);
+    console.warn("API product by ID: Database unreachable, checking mockProducts:", error);
+
+    if (!isNaN(productId)) {
+      const mock = mockProducts.find((p) => p.id === productId);
+      if (mock) {
+        return NextResponse.json(mock, { status: 200 });
+      }
+    }
+
     return NextResponse.json(
-      { error: "Error interno al consultar producto" },
+      { error: "Error al consultar producto" },
       { status: 500 }
     );
   }

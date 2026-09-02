@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyJWT } from "./lib/auth";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // The Stripe webhook and guest checkout endpoints must be public
@@ -12,8 +12,12 @@ export async function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/api/admin");
   const isCheckoutRoute = pathname.startsWith("/api/checkout");
+  const isOrdersRoute = pathname === "/api/orders" || pathname.startsWith("/api/orders/");
+  const isReviewsRoute = pathname.startsWith("/api/reviews");
 
-  if (isAdminRoute || isCheckoutRoute) {
+  const requiresAuth = isAdminRoute || isCheckoutRoute || isOrdersRoute || isReviewsRoute;
+
+  if (requiresAuth) {
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -69,5 +73,8 @@ export const config = {
   matcher: [
     "/api/admin/:path*",
     "/api/checkout/:path*",
+    "/api/orders",
+    "/api/orders/:path*",
+    "/api/reviews/:path*",
   ],
 };
