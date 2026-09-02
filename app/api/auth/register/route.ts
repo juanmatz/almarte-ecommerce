@@ -36,30 +36,29 @@ export async function POST(request: Request) {
       where: { email: email.toLowerCase() },
     });
 
+    if (existingUser && !existingUser.isGuest) {
+      return NextResponse.json(
+        { error: "El correo electrónico ya está registrado" },
+        { status: 400 }
+      );
+    }
+
+    // Hash password once
+    const passwordHash = await bcrypt.hash(password, 10);
+
     let user;
 
-    if (existingUser) {
-      if (existingUser.isGuest) {
-        // Convert guest user to regular user
-        const passwordHash = await bcrypt.hash(password, 10);
-        user = await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            name,
-            passwordHash,
-            isGuest: false,
-          },
-        });
-      } else {
-        return NextResponse.json(
-          { error: "El correo electrónico ya está registrado" },
-          { status: 400 }
-        );
-      }
+    if (existingUser && existingUser.isGuest) {
+      // Convert guest user to regular user
+      user = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name,
+          passwordHash,
+          isGuest: false,
+        },
+      });
     } else {
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
-
       // Create new user in database
       user = await prisma.user.create({
         data: {

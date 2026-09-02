@@ -17,23 +17,34 @@ export default async function Home() {
     take: 4,
     where: { isAvailable: true },
     orderBy: { createdAt: "desc" },
+    include: {
+      reviews: {
+        select: { rating: true },
+      },
+    },
   });
 
   // Convert decimal properties to number and camelCase to snake_case for safe Client Component passing
-  const featuredProducts = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description ?? undefined,
-    price: Number(p.price),
-    discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
-    is_available: p.isAvailable,
-    image_url: p.imageUrl,
-    category: p.category,
-    subcategory: p.subcategory ?? undefined,
-    // Add default review data for visual rendering
-    rating: 4.8,
-    reviewCount: 15,
-  }));
+  const featuredProducts = products.map((p) => {
+    const reviewCount = p.reviews.length;
+    const rating = reviewCount > 0
+      ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
+      : 0;
+
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? undefined,
+      price: Number(p.price),
+      discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
+      is_available: p.isAvailable,
+      image_url: p.imageUrl,
+      category: p.category,
+      subcategory: p.subcategory ?? undefined,
+      rating,
+      reviewCount,
+    };
+  });
 
   const categories = [
     {

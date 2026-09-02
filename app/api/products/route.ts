@@ -90,10 +90,9 @@ export async function GET(request: Request) {
     // Format products for frontend consumption
     const formattedProducts = products.map((p) => {
       const reviewCount = p.reviews.length;
-      // Default to 4.8 if there are no reviews to match mock visual design
       const rating = reviewCount > 0
         ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
-        : 4.8;
+        : 0;
 
       return {
         id: p.id,
