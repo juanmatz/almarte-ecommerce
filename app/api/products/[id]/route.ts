@@ -54,10 +54,9 @@ export async function GET(
     }
 
     const reviewCount = product.reviews.length;
-    // Default to 4.8 if there are no reviews to match mock visual design
     const rating = reviewCount > 0
       ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
-      : 4.8;
+      : 0;
 
     const formattedProduct = {
       id: product.id,
