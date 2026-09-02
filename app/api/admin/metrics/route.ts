@@ -13,32 +13,26 @@ export async function GET(request: Request) {
       );
     }
 
-    // 2. Fetch total count of products
-    const totalProducts = await prisma.product.count();
-
-    // 3. Fetch orders metrics
-    const orders = await prisma.order.findMany({
-      select: {
-        total: true,
-        status: true,
-      },
-    });
-
-    const totalOrders = orders.length;
-
-    // Revenue: sum of all orders that are paid or shipped
-    const totalRevenue = orders
-      .filter((o) => o.status === "paid" || o.status === "shipped")
-      .reduce((acc, o) => acc + Number(o.total), 0);
-
-    // Pending shipments: status not delivered/returned
-    const pendingShipments = await prisma.shipment.count({
-      where: {
-        status: {
-          in: ["pending", "dispatched", "in_transit"],
+    // 2. Fetch counts and aggregate revenue in parallel using DB aggregates
+    const [totalProducts, totalOrders, revenueAggregate, pendingShipments] = await Promise.all([
+      prisma.product.count(),
+      prisma.order.count(),
+      prisma.order.aggregate({
+        _sum: { total: true },
+        where: {
+          status: { in: ["paid", "shipped"] },
         },
-      },
-    });
+      }),
+      prisma.shipment.count({
+        where: {
+          status: {
+            in: ["pending", "dispatched", "in_transit"],
+          },
+        },
+      }),
+    ]);
+
+    const totalRevenue = Number(revenueAggregate._sum.total || 0);
 
     // 4. Recent orders
     const recentOrders = await prisma.order.findMany({

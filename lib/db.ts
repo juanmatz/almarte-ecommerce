@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === "production") {
   const config = getDbConfig();
   const adapter = new PrismaMariaDb({
     ...config,
-    connectionLimit: 15, // Hostinger Business connection pool limit
+    connectionLimit: 10, // Optimized connection pool limit for shared hosting
     allowPublicKeyRetrieval: true,
   });
   prisma = new PrismaClient({ adapter });
