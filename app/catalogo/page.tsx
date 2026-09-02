@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 
 // Next.js 16 metadata configuration
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Catálogo de Productos Artesanales | Almarte",
   description:
