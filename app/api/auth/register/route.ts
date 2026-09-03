@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
     // Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
