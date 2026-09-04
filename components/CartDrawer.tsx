@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { formatCOP } from "@/lib/currency";
 
 export default function CartDrawer() {
   const {
@@ -117,7 +118,7 @@ export default function CartDrawer() {
                             {item.product.name}
                           </h4>
                           <span className="font-sans text-sm font-bold text-foreground pl-2">
-                            ${(price * item.quantity).toLocaleString("es-CO")}
+                            {formatCOP(price * item.quantity)}
                           </span>
                         </div>
                         {item.product.subcategory && (
@@ -176,7 +177,7 @@ export default function CartDrawer() {
             <div className="flex justify-between text-base font-medium">
               <span className="font-serif text-sm font-semibold text-title">Subtotal</span>
               <span className="font-sans text-lg font-bold text-foreground">
-                ${cartSubtotal.toLocaleString("es-CO")}
+                {formatCOP(cartSubtotal)}
               </span>
             </div>
             <p className="text-xs text-text-secondary">

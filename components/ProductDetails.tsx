@@ -8,6 +8,7 @@ import { useCart, Product } from "@/context/CartContext";
 import PriceDisplay from "./PriceDisplay";
 import StarRating from "./StarRating";
 import AvailabilityBadge from "./AvailabilityBadge";
+import { formatCOP } from "@/lib/currency";
 
 interface Review {
   id: number;
@@ -206,10 +207,7 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
 
   const categoryDetails = getCategoryDetails();
 
-  // Price formatting helper
-  const formatCOP = (val: number) => {
-    return `$${val.toLocaleString("es-CO")}`;
-  };
+
 
   // Review star distributions for rating visualization
   const starDistributions = [5, 4, 3, 2, 1].map((stars) => {
@@ -324,7 +322,7 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
               {product.discount_price && (
                 <div className="text-right">
                   <span className="inline-block text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-md">
-                    ¡Ahorras {formatCOP(product.price - product.discount_price)} COP!
+                    ¡Ahorras {formatCOP(product.price - product.discount_price)}!
                   </span>
                 </div>
               )}

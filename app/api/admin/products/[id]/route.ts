@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth";
+import { parseCOPPrice, isValidCOPPrice } from "@/lib/currency";
 
 export async function PATCH(
   request: Request,
@@ -56,26 +57,27 @@ export async function PATCH(
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description || null;
     
+    let finalPrice = Number(existing.price);
     if (price !== undefined) {
-      const priceNum = parseFloat(price);
-      if (isNaN(priceNum) || priceNum <= 0) {
+      const priceNum = parseCOPPrice(price);
+      if (!isValidCOPPrice(priceNum)) {
         return NextResponse.json(
-          { error: "El precio regular debe ser un número mayor a cero" },
+          { error: "El precio regular debe ser un valor válido en pesos colombianos de al menos $1.000 COP." },
           { status: 400 }
         );
       }
       updateData.price = priceNum;
+      finalPrice = priceNum;
     }
 
     if (discountPrice !== undefined) {
       if (discountPrice === null || discountPrice === "") {
         updateData.discountPrice = null;
       } else {
-        const discountPriceNum = parseFloat(discountPrice);
-        const finalPrice = price !== undefined ? parseFloat(price) : Number(existing.price);
-        if (isNaN(discountPriceNum) || discountPriceNum < 0 || discountPriceNum >= finalPrice) {
+        const discountPriceNum = parseCOPPrice(discountPrice);
+        if (!isValidCOPPrice(discountPriceNum) || discountPriceNum >= finalPrice) {
           return NextResponse.json(
-            { error: "El precio de descuento debe ser un número menor al precio regular" },
+            { error: "El precio de descuento debe ser menor al precio regular y de al menos $1.000 COP." },
             { status: 400 }
           );
         }

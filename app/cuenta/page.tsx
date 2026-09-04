@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { User as UserIcon, LogOut, Settings, ShieldAlert, ShoppingBag, Loader2, Package, Truck, Calendar } from "lucide-react";
 import Link from "next/link";
+import { formatCOP } from "@/lib/currency";
 
 export default function CuentaPage() {
   const { user, token, loading, logout } = useAuth();
@@ -46,14 +47,7 @@ export default function CuentaPage() {
     }
   }, [user, token, loading]);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(val);
-  };
+
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -203,11 +197,11 @@ export default function CuentaPage() {
                               <div>
                                 <p className="font-semibold text-foreground leading-snug group-hover:text-primary transition">{item.productName}</p>
                                 <p className="text-[10px] text-text-secondary mt-0.5">
-                                  Cantidad: {item.quantity} × {formatCurrency(item.priceAtPurchase)}
+                                  Cantidad: {item.quantity} × {formatCOP(item.priceAtPurchase)}
                                 </p>
                               </div>
                             </Link>
-                            <p className="font-semibold text-title">{formatCurrency(item.priceAtPurchase * item.quantity)}</p>
+                            <p className="font-semibold text-title">{formatCOP(item.priceAtPurchase * item.quantity)}</p>
                           </div>
                         ))}
                       </div>
@@ -215,7 +209,7 @@ export default function CuentaPage() {
                       {/* Total */}
                       <div className="flex items-center justify-between pt-3 border-t border-divider/30 text-sm font-bold text-foreground">
                         <span>Total pagado:</span>
-                        <span className="text-base text-primary">{formatCurrency(order.total)}</span>
+                        <span className="text-base text-primary">{formatCOP(order.total)}</span>
                       </div>
 
                       {/* Shipment Section */}

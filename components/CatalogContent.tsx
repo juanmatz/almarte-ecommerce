@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SlidersHorizontal, X, ChevronDown, Check, Search, RotateCcw } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { Product } from "@/context/CartContext";
+import { formatCOP } from "@/lib/currency";
 
 const CATEGORIES = [
   { name: "Todos los Productos", slug: "" },
@@ -146,10 +147,7 @@ export default function CatalogContent({ searchParams = {}, initialCategory }: C
     isAvailableOnly ||
     searchVal !== "";
 
-  // Helper to format currency
-  const formatCOP = (val: number) => {
-    return `$${val.toLocaleString("es-CO")}`;
-  };
+
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 font-sans">

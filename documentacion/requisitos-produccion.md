@@ -440,7 +440,8 @@ Se deben monitorear y alertar al menos:
 ### RNF-019 - Despliegue reproducible
 **Prioridad:** P0
 
-- La aplicación se construye desde el lockfile y una versión fijada de Node/Bun.
+- La aplicación se construye desde el lockfile (`yarn.lock`) y una versión fijada de Node/Bun.
+- **Gestor de paquetes obligatorio en deployment:** En el entorno de despliegue y producción se debe utilizar **exclusivamente Yarn** (`yarn install --frozen-lockfile`, `yarn build`, `yarn start`). Queda estrictamente prohibido el uso de `npm` o `pnpm` en deployment.
 - Se documentan comandos de build, migración y arranque.
 - El contenedor, si se usa, incluye la aplicación y no solo la base de datos.
 - No se ejecuta `seed` destructivo durante el despliegue.

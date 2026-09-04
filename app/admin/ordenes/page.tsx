@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ClipboardList, User, MapPin, Package, Truck, Save, X, Loader2, Calendar } from "lucide-react";
 import Image from "next/image";
+import { formatCOP } from "@/lib/currency";
 
 interface OrderItem {
   id: number;
@@ -223,14 +224,7 @@ export default function AdminOrdenesPage() {
     }
   };
 
-  const formatCOP = (value: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+
 
   const getOrderStatusBadge = (status: string) => {
     switch (status) {

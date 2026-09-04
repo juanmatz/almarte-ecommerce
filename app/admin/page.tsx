@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { DollarSign, ShoppingBag, Box, Truck, ArrowUpRight, ClipboardList, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { formatCOP } from "@/lib/currency";
 
 interface MetricCardProps {
   title: string;
@@ -81,14 +82,7 @@ export default function AdminDashboard() {
     fetchMetrics();
   }, [token]);
 
-  const formatCOP = (value: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+
 
   const getOrderStatusBadge = (status: string) => {
     switch (status) {

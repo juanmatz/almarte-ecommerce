@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth";
+import { parseCOPPrice, isValidCOPPrice } from "@/lib/currency";
 
 export async function POST(request: Request) {
   try {
@@ -40,19 +41,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const priceNum = parseFloat(price);
-    const discountPriceNum = discountPrice ? parseFloat(discountPrice) : null;
+    const priceNum = parseCOPPrice(price);
+    const discountPriceNum = discountPrice ? parseCOPPrice(discountPrice) : null;
 
-    if (isNaN(priceNum) || priceNum <= 0) {
+    if (!isValidCOPPrice(priceNum)) {
       return NextResponse.json(
-        { error: "El precio regular debe ser un número mayor a cero" },
+        { error: "El precio regular debe ser un valor válido en pesos colombianos de al menos $1.000 COP." },
         { status: 400 }
       );
     }
 
-    if (discountPriceNum !== null && (isNaN(discountPriceNum) || discountPriceNum < 0 || discountPriceNum >= priceNum)) {
+    if (discountPriceNum !== null && (!isValidCOPPrice(discountPriceNum) || discountPriceNum >= priceNum)) {
       return NextResponse.json(
-        { error: "El precio de descuento debe ser un número válido menor al precio regular" },
+        { error: "El precio de descuento debe ser menor al precio regular y de al menos $1.000 COP." },
         { status: 400 }
       );
     }

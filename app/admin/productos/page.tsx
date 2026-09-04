@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X, Loader2, Sparkles, UploadCloud, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { formatCOP, parseCOPPrice, isValidCOPPrice } from "@/lib/currency";
 
 interface Product {
   id: number;
@@ -233,17 +234,17 @@ export default function AdminProductosPage() {
     e.preventDefault();
     setSubmitting(true);
 
-    const priceNum = parseFloat(formPrice);
-    const discountPriceNum = formDiscountPrice ? parseFloat(formDiscountPrice) : undefined;
+    const priceNum = parseCOPPrice(formPrice);
+    const discountPriceNum = formDiscountPrice ? parseCOPPrice(formDiscountPrice) : undefined;
 
-    if (isNaN(priceNum) || priceNum <= 0) {
-      showNotification("El precio debe ser un número positivo.", "error");
+    if (!isValidCOPPrice(priceNum)) {
+      showNotification("El precio debe ser de al menos $1.000 COP (Pesos Colombianos). Si deseas registrar $85.000 COP, escribe 85000 o 85.000.", "error");
       setSubmitting(false);
       return;
     }
 
-    if (discountPriceNum !== undefined && (isNaN(discountPriceNum) || discountPriceNum >= priceNum || discountPriceNum < 0)) {
-      showNotification("El precio de descuento debe ser menor al precio regular.", "error");
+    if (discountPriceNum !== undefined && (!isValidCOPPrice(discountPriceNum) || discountPriceNum >= priceNum)) {
+      showNotification("El precio de descuento debe ser menor al precio regular y de al menos $1.000 COP.", "error");
       setSubmitting(false);
       return;
     }
@@ -296,14 +297,7 @@ export default function AdminProductosPage() {
     }
   };
 
-  const formatCOP = (value: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+
 
   const selectedCategoryObj = CATEGORIES.find(c => c.slug === formCategory);
 
@@ -563,27 +557,44 @@ export default function AdminProductosPage() {
 
                   {/* Price field */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
-                      Precio Regular (COP)
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
+                        Precio Regular (COP)
+                      </label>
+                      {formPrice && (
+                        <span className="text-[10px] font-bold text-primary">
+                          Vista previa: {formatCOP(parseCOPPrice(formPrice))}
+                        </span>
+                      )}
+                    </div>
                     <input
-                      type="number"
+                      type="text"
                       required
-                      placeholder="Ej. 85000"
+                      placeholder="Ej. 85000 o 85.000"
                       value={formPrice}
                       onChange={(e) => setFormPrice(e.target.value)}
                       className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
                     />
+                    <p className="text-[10px] text-text-secondary">
+                      Moneda oficial: Pesos Colombianos (COP). Escribe 85000 o 85.000 para $ 85.000 COP.
+                    </p>
                   </div>
 
                   {/* Discount Price field */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
-                      Precio de Descuento (Opcional)
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
+                        Precio de Descuento (Opcional)
+                      </label>
+                      {formDiscountPrice && (
+                        <span className="text-[10px] font-bold text-primary">
+                          Vista previa: {formatCOP(parseCOPPrice(formDiscountPrice))}
+                        </span>
+                      )}
+                    </div>
                     <input
-                      type="number"
-                      placeholder="Ej. 68000 (Dejar en blanco si no tiene)"
+                      type="text"
+                      placeholder="Ej. 68000 o 68.000 (Dejar en blanco si no tiene)"
                       value={formDiscountPrice}
                       onChange={(e) => setFormDiscountPrice(e.target.value)}
                       className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
