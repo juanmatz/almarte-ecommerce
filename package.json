@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
-    "seed": "tsx prisma/seed.ts",
-    "create-admin": "tsx scripts/create-admin.ts",
+    "seed": "tsx --env-file=.env prisma/seed.ts",
+    "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
     "lint": "eslint"
   },
   "dependencies": {
@@ -37,6 +37,6 @@
     "typescript": "^5"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx --env-file=.env prisma/seed.ts"
   }
 }
