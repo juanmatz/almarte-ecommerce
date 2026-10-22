@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
-import { JWT_SECRET } from "@/lib/auth";
+import { getJwtSecret } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -32,14 +32,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user already exists
+    // Check if user already exists (registered or guest)
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
-    if (existingUser && !existingUser.isGuest) {
+    if (existingUser) {
       return NextResponse.json(
-        { error: "El correo electrónico ya está registrado" },
+        { error: "El correo electrónico ya está registrado o asociado a un pedido previo. Inicia sesión o solicita asistencia." },
         { status: 400 }
       );
     }
@@ -47,35 +47,21 @@ export async function POST(request: Request) {
     // Hash password once
     const passwordHash = await bcrypt.hash(password, 10);
 
-    let user;
-
-    if (existingUser && existingUser.isGuest) {
-      // Convert guest user to regular user
-      user = await prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          name,
-          passwordHash,
-          isGuest: false,
-        },
-      });
-    } else {
-      // Create new user in database
-      user = await prisma.user.create({
-        data: {
-          name,
-          email: email.toLowerCase(),
-          passwordHash,
-          role: "customer", // Default role
-          isGuest: false,
-        },
-      });
-    }
+    // Create new user in database
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: email.toLowerCase(),
+        passwordHash,
+        role: "customer", // Default role
+        isGuest: false,
+      },
+    });
 
     // Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: "7d" }
     );
 

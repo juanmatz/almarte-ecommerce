@@ -153,6 +153,8 @@ erDiagram
         decimal price
         decimal discount_price
         boolean is_available
+        int stock
+        int low_stock_alert
         string image_url
         string category
         string subcategory
@@ -225,7 +227,9 @@ Catálogo central de artículos artesanales.
 * `description` (TEXT): Descripción de propiedades, minerales y cuidados.
 * `price` (DECIMAL 10,2): Precio regular en COP.
 * `discount_price` (DECIMAL 10,2, Nullable): Precio promocional.
-* `is_available` (BOOLEAN, Default: true): Control manual de stock (`true` = disponible, `false` = agotado).
+* `is_available` (BOOLEAN, Default: true): Control manual y automático de visibilidad/disponibilidad.
+* `stock` (INT, Default: 0): Inventario cuantitativo en unidades físicas. Decrementado atómicamente con `$transaction` en checkout.
+* `low_stock_alert` (INT, Default: 2): Umbral numérico para disparar el distintivo de escasez (*"¡Solo quedan X!"*).
 * `image_url` (VARCHAR 255): Fotografía de portada (Cloudinary).
 * `category` / `subcategory` (VARCHAR 50): Clasificación taxonómica.
 
@@ -283,8 +287,10 @@ Todas las rutas API residen en `app/api/` y responden en formato JSON.
 * `GET /api/products`: Lista filtrable y paginada del catálogo. Parámetros query: `category`, `subcategory`, `available`, `discount`.
 * `GET /api/products/:id`: Detalle completo de la pieza, incluyendo galería de imágenes y calificaciones promedio.
 
-### 4.3. Checkout y Creación de Órdenes (`/api/checkout` y `/api/orders`)
-* `POST /api/checkout/guest-intent`: Recibe el carrito y datos del cliente invitado/registrado. Valida precios vigentes en BD, congela `price_at_purchase`, crea o enlaza el usuario `User`, y crea la `Order` y su `Shipment` en estado `pending`.
+### 4.3. Checkout y Creación de Órdenes (`/api/checkout`, `/api/orders` y `/api/webhooks`)
+* `POST /api/checkout/guest-intent`: Recibe el carrito y datos del cliente invitado/registrado. Valida existencias y descuenta stock atómicamente con `$transaction`, genera la referencia única de pago (`ALM-{orderId}-{timestamp}`), liquida en centavos COP (`total * 100`), computa la firma de integridad SHA-256 (`lib/wompi.ts`) y retorna los parámetros para abrir el Widget o Web Checkout de Wompi.
+* `GET /api/checkout/wompi/verify`: *(Público)* Consulta el estado verificado de una transacción contra la API de Wompi (`GET /v1/transactions/:id`) al retornar a `/checkout/confirmacion`. Si el pago está aprobado, actualiza inmediatamente la orden a `paid`.
+* `POST /api/webhooks/wompi`: *(Público)* Endpoint receptor de eventos asíncronos de Wompi (`transaction.updated`). Valida la firma dinámica (`signature.checksum`) con `WOMPI_EVENTS_SECRET`, aplica idempotencia basada en el ID de transacción y actualiza el estado de la orden a `paid`, `cancelled` o fallida según corresponda.
 * `GET /api/orders`: *(Requiere autenticación)* Consulta el historial de órdenes del usuario logueado.
 * `GET /api/orders/:id`: *(Requiere autenticación)* Retorna el desglose de la orden e información de envío asociada.
 
@@ -563,6 +569,15 @@ JWT_SECRET="clave_secreta_de_alta_entropia_para_produccion"
 CLOUDINARY_CLOUD_NAME="nombre_cloud"
 CLOUDINARY_API_KEY="api_key"
 CLOUDINARY_API_SECRET="api_secret"
+
+# Pasarela de Pagos Wompi (Bancolombia) - Sandbox en desarrollo, Producción en Hostinger
+NEXT_PUBLIC_WOMPI_PUBLIC_KEY="pub_test_..." # O pub_prod_... en producción
+WOMPI_PRIVATE_KEY="prv_test_..."            # O prv_prod_... en producción
+WOMPI_INTEGRITY_SECRET="test_integrity_..." # O prod_integrity_... en producción
+WOMPI_EVENTS_SECRET="test_events_..."       # O prod_events_... en producción
+
+# URL base para redirección de checkout
+NEXT_PUBLIC_BASE_URL="https://tudominio.com"
 
 # Entorno de ejecución
 NODE_ENV="production"

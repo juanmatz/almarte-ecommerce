@@ -34,6 +34,8 @@ export async function PATCH(
       price,
       discountPrice,
       isAvailable,
+      stock,
+      lowStockAlert,
       imageUrl,
       category,
       subcategory,
@@ -87,6 +89,19 @@ export async function PATCH(
 
     if (isAvailable !== undefined) {
       updateData.isAvailable = Boolean(isAvailable);
+    }
+
+    if (stock !== undefined) {
+      const stockNum = Math.max(0, parseInt(stock, 10) || 0);
+      updateData.stock = stockNum;
+      // Si el stock se establece en 0 y no se especificó isAvailable, marcar automáticamente como no disponible
+      if (stockNum === 0 && isAvailable === undefined) {
+        updateData.isAvailable = false;
+      }
+    }
+
+    if (lowStockAlert !== undefined) {
+      updateData.lowStockAlert = Math.max(1, parseInt(lowStockAlert, 10) || 2);
     }
 
     if (imageUrl !== undefined) {

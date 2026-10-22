@@ -61,13 +61,16 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
     }
   }, []);
 
+  const isPurchasable = product.is_available && (product.stock === undefined || product.stock > 0);
+
   const handleQuantityChange = (val: number) => {
-    if (val < 1) return;
+    const maxStock = product.stock !== undefined ? product.stock : 99;
+    if (val < 1 || (maxStock > 0 && val > maxStock)) return;
     setQuantity(val);
   };
 
   const handleAddToCart = () => {
-    if (product.is_available) {
+    if (isPurchasable) {
       addToCart(product, quantity);
     }
   };
@@ -253,6 +256,8 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
                 isAvailable={product.is_available}
                 price={product.price}
                 discountPrice={product.discount_price}
+                stock={product.stock}
+                lowStockAlert={product.low_stock_alert}
               />
             </div>
           </div>
@@ -337,6 +342,14 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
           {/* Action Area */}
           <div className="space-y-4 pt-4">
             
+            {/* Low stock urgency alert */}
+            {product.stock !== undefined && product.stock > 0 && product.stock <= (product.low_stock_alert || 3) && (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-xs font-semibold">
+                <Sparkles className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>¡Pieza artesanal exclusiva! Solo quedan <strong>{product.stock} {product.stock === 1 ? "unidad" : "unidades"}</strong> disponibles en el taller.</span>
+              </div>
+            )}
+
             {/* Quantity and Cart button */}
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
               
@@ -345,17 +358,17 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={!product.is_available}
-                  className="px-3.5 py-2.5 text-text-primary hover:bg-surface/50 active:bg-surface transition disabled:opacity-40 font-bold"
+                  disabled={!isPurchasable || quantity <= 1}
+                  className="px-3.5 py-2.5 text-text-primary hover:bg-surface/50 active:bg-surface transition disabled:opacity-40 font-bold cursor-pointer disabled:cursor-not-allowed"
                 >
                   -
                 </button>
-                <span className="text-sm font-bold text-title">{quantity}</span>
+                <span className="text-sm font-bold text-title">{isPurchasable ? quantity : 0}</span>
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={!product.is_available}
-                  className="px-3.5 py-2.5 text-text-primary hover:bg-surface/50 active:bg-surface transition disabled:opacity-40 font-bold"
+                  disabled={!isPurchasable || (product.stock !== undefined && quantity >= product.stock)}
+                  className="px-3.5 py-2.5 text-text-primary hover:bg-surface/50 active:bg-surface transition disabled:opacity-40 font-bold cursor-pointer disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -365,15 +378,15 @@ export default function ProductDetails({ product: initialProduct }: ProductDetai
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={!product.is_available}
+                disabled={!isPurchasable}
                 className={`flex-1 flex items-center justify-center gap-x-2 rounded-lg py-3 px-8 text-sm font-bold shadow-md transition duration-200 ${
-                  product.is_available
+                  isPurchasable
                     ? "bg-primary text-white hover:bg-primary-hover active:scale-98 cursor-pointer"
                     : "bg-divider text-text-secondary cursor-not-allowed"
                 }`}
               >
                 <ShoppingBag className="h-4.5 w-4.5" />
-                {product.is_available ? "Agregar al Carrito" : "Agotado Temporalmente"}
+                {isPurchasable ? "Agregar al Carrito" : "Agotado Temporalmente"}
               </button>
 
               {/* Wishlist Button (Aesthetic) */}

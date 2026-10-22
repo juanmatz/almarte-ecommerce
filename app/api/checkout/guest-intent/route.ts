@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getWompiConfig, generateWompiSignature } from "@/lib/wompi";
 
 interface CheckoutItem {
   product_id: number;
@@ -71,31 +72,55 @@ export async function POST(request: Request) {
 
     // 2. Fetch and validate all products
     const productIds = items.map((item: CheckoutItem) => item.product_id);
+    const uniqueProductIds = Array.from(new Set(productIds));
     const dbProducts = await prisma.product.findMany({
       where: {
-        id: { in: productIds },
+        id: { in: uniqueProductIds },
       },
     });
 
-    if (dbProducts.length !== productIds.length) {
+    if (dbProducts.length !== uniqueProductIds.length) {
       return NextResponse.json(
         { error: "Uno o más productos del carrito no existen." },
         { status: 400 }
       );
     }
 
-    // Check if any product is unavailable
-    const unavailableProduct = dbProducts.find((p) => !p.isAvailable);
-    if (unavailableProduct) {
-      return NextResponse.json(
-        { error: `El producto "${unavailableProduct.name}" no está disponible.` },
-        { status: 400 }
-      );
+    // Agrupar cantidades solicitadas por producto
+    const requestedQuantities = new Map<number, number>();
+    for (const item of items) {
+      const current = requestedQuantities.get(item.product_id) || 0;
+      requestedQuantities.set(item.product_id, current + item.quantity);
+    }
+
+    // Validar disponibilidad y stock suficiente
+    for (const dbProduct of dbProducts) {
+      const requestedQty = requestedQuantities.get(dbProduct.id) || 0;
+      if (!dbProduct.isAvailable || dbProduct.stock <= 0) {
+        return NextResponse.json(
+          { error: `El producto "${dbProduct.name}" se encuentra agotado.` },
+          { status: 400 }
+        );
+      }
+      if (dbProduct.stock < requestedQty) {
+        return NextResponse.json(
+          {
+            error: `El producto "${dbProduct.name}" solo tiene ${dbProduct.stock} ${
+              dbProduct.stock === 1 ? "unidad disponible" : "unidades disponibles"
+            } (solicitaste ${requestedQty}).`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 3. Calculate total and prepare items data
     let totalAmount = 0;
-    const orderItemsToCreate = [];
+    const orderItemsToCreate: {
+      productId: number;
+      quantity: number;
+      priceAtPurchase: number;
+    }[] = [];
 
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.product_id)!;
@@ -110,82 +135,135 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. Find or Create User (Hybrid Approach B)
+    // 4. Find or Create User (Safe Guest Handling)
     let user = await prisma.user.findUnique({
       where: { email: trimmedEmail.toLowerCase() },
     });
 
     if (!user) {
-      // Create guest user
-      user = await prisma.user.create({
-        data: {
+      // Upsert prevents race condition error (P2002) on concurrent double-click
+      user = await prisma.user.upsert({
+        where: { email: trimmedEmail.toLowerCase() },
+        create: {
           name: trimmedName,
           email: trimmedEmail.toLowerCase(),
           passwordHash: null,
-          documentId: trimmedDocumentId,
+          documentId: trimmedDocumentId || null,
           isGuest: true,
           role: "customer",
         },
+        update: {},
       });
-      console.log(`Usuario invitado creado: ${user.email} (ID: ${user.id})`);
-    } else {
-      // If user exists and is guest, update their documentId or name if changed
-      if (user.isGuest) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            name: trimmedName,
-            documentId: trimmedDocumentId || user.documentId,
-          },
-        });
-        console.log(`Usuario invitado actualizado: ${user.email}`);
-      } else {
-        // If user is a registered user, we let them check out under their profile!
-        // We might also save/update their documentId if they don't have it
-        if (!user.documentId && trimmedDocumentId) {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: { documentId: trimmedDocumentId },
-          });
-        }
-        console.log(`Orden asociada a usuario registrado existente: ${user.email}`);
-      }
+    } else if (user.isGuest) {
+      // If user exists and is a guest, update their documentId or name
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: trimmedName,
+          documentId: trimmedDocumentId || user.documentId,
+        },
+      });
     }
+    // Registered accounts retain their existing verified profile data; the order links to user.id.
 
-    // 5. Create Order and items in a transaction
+    // 5. Create Order and items with atomic stock decrement in a single transaction
     const shippingAddressJson = JSON.stringify({
       city: trimmedCity,
       address: trimmedAddress,
       phone: trimmedPhone,
     });
 
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        total: totalAmount,
-        status: "pending",
-        shippingAddress: shippingAddressJson,
-        orderItems: {
-          create: orderItemsToCreate,
-        },
-        shipment: {
-          create: {
-            status: "pending",
-            notes: "Pedido registrado mediante checkout de invitado. Pendiente de pago.",
+    const order = await prisma.$transaction(async (tx) => {
+      // Decremento atómico con bloqueo de fila en MariaDB
+      for (const [productId, qty] of requestedQuantities.entries()) {
+        const updated = await tx.product.update({
+          where: { id: productId },
+          data: {
+            stock: { decrement: qty },
+          },
+        });
+
+        // Prevención de sobreventa concurrente
+        if (updated.stock < 0) {
+          throw new Error(`INSUFFICIENT_STOCK:${updated.name}`);
+        }
+
+        // Si el inventario llega a 0, marcar producto como no disponible
+        if (updated.stock === 0) {
+          await tx.product.update({
+            where: { id: productId },
+            data: { isAvailable: false },
+          });
+        }
+      }
+
+      return await tx.order.create({
+        data: {
+          userId: user.id,
+          total: totalAmount,
+          status: "pending",
+          shippingAddress: shippingAddressJson,
+          orderItems: {
+            create: orderItemsToCreate,
+          },
+          shipment: {
+            create: {
+              status: "pending",
+              notes: "Pedido registrado. Inventario descontado con éxito y pendiente de pago.",
+            },
           },
         },
+      });
+    });
+
+    // 6. Generate Wompi transaction parameters and update order reference
+    const reference = `ALM-${order.id}-${Date.now()}`;
+    const amountInCents = Math.round(totalAmount * 100);
+    const wompiConfig = getWompiConfig();
+    let wompiSignature = "";
+
+    try {
+      if (wompiConfig.integritySecret) {
+        wompiSignature = generateWompiSignature(reference, amountInCents, "COP");
+      }
+    } catch (sigErr) {
+      console.warn("No se pudo generar firma de integridad Wompi:", sigErr);
+    }
+
+    // Save generated reference in order.paymentIntentId for idempotency and lookup
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentIntentId: reference,
       },
     });
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const redirectUrl = `${baseUrl}/checkout/confirmacion?orderId=${order.id}&reference=${encodeURIComponent(reference)}`;
 
     return NextResponse.json(
       {
         message: "Pedido registrado con éxito",
         orderId: order.id,
         total: totalAmount,
+        amountInCents,
+        reference,
+        signature: wompiSignature,
+        publicKey: wompiConfig.publicKey,
+        currency: "COP",
+        redirectUrl,
+        checkoutUrl: wompiConfig.checkoutUrl,
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.startsWith("INSUFFICIENT_STOCK:")) {
+      const productName = error.message.split(":")[1];
+      return NextResponse.json(
+        { error: `Lo sentimos, otro cliente acaba de adquirir las últimas unidades de "${productName}". Por favor ajusta tu carrito.` },
+        { status: 409 }
+      );
+    }
     console.error("Error al registrar compra de invitado:", error);
     return NextResponse.json(
       { error: "Error interno del servidor al procesar el pedido." },

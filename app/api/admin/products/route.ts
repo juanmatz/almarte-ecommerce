@@ -22,6 +22,8 @@ export async function POST(request: Request) {
       price,
       discountPrice,
       isAvailable,
+      stock,
+      lowStockAlert,
       imageUrl,
       category,
       subcategory,
@@ -43,6 +45,8 @@ export async function POST(request: Request) {
 
     const priceNum = parseCOPPrice(price);
     const discountPriceNum = discountPrice ? parseCOPPrice(discountPrice) : null;
+    const stockNum = stock !== undefined ? Math.max(0, parseInt(stock, 10) || 0) : 0;
+    const lowStockAlertNum = lowStockAlert !== undefined ? Math.max(1, parseInt(lowStockAlert, 10) || 2) : 2;
 
     if (!isValidCOPPrice(priceNum)) {
       return NextResponse.json(
@@ -65,7 +69,9 @@ export async function POST(request: Request) {
         description: description || null,
         price: priceNum,
         discountPrice: discountPriceNum,
-        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
+        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : stockNum > 0,
+        stock: stockNum,
+        lowStockAlert: lowStockAlertNum,
         imageUrl,
         category,
         subcategory: subcategory || null,

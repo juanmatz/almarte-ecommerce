@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
+import { getJwtSecret } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -46,10 +47,9 @@ export async function POST(request: Request) {
     }
 
     // Generate JWT token
-    const secret = process.env.JWT_SECRET || "almarte-default-jwt-super-secret-key-change-in-env-2026";
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      secret,
+      getJwtSecret(),
       { expiresIn: "7d" }
     );
 

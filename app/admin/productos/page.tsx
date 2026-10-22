@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X, Loader2, Sparkles, UploadCloud, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
@@ -13,6 +14,8 @@ interface Product {
   price: number;
   discount_price?: number;
   is_available: boolean;
+  stock?: number;
+  low_stock_alert?: number;
   image_url: string;
   image_urls?: string[];
   category: string;
@@ -30,7 +33,8 @@ const CATEGORIES = [
 ];
 
 export default function AdminProductosPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +49,8 @@ export default function AdminProductosPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formPrice, setFormPrice] = useState("");
   const [formDiscountPrice, setFormDiscountPrice] = useState("");
+  const [formStock, setFormStock] = useState("0");
+  const [formLowStockAlert, setFormLowStockAlert] = useState("2");
   const [formImageUrl, setFormImageUrl] = useState("");
   const [formImageUrls, setFormImageUrls] = useState<string[]>([]);
   const [formCategory, setFormCategory] = useState("accesorios");
@@ -154,6 +160,8 @@ export default function AdminProductosPage() {
     setFormDescription("");
     setFormPrice("");
     setFormDiscountPrice("");
+    setFormStock("10");
+    setFormLowStockAlert("2");
     setFormImageUrl("https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop");
     setFormImageUrls([]);
     setFormCategory("accesorios");
@@ -168,6 +176,8 @@ export default function AdminProductosPage() {
     setFormDescription(product.description || "");
     setFormPrice(product.price.toString());
     setFormDiscountPrice(product.discount_price ? product.discount_price.toString() : "");
+    setFormStock((product.stock ?? 0).toString());
+    setFormLowStockAlert((product.low_stock_alert ?? 2).toString());
     setFormImageUrl(product.image_url);
     setFormImageUrls((product.image_urls || []).slice(1));
     setFormCategory(product.category);
@@ -186,6 +196,12 @@ export default function AdminProductosPage() {
         },
         body: JSON.stringify({ isAvailable: !product.is_available }),
       });
+
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        router.push("/cuenta/login");
+        return;
+      }
 
       if (!res.ok) {
         const errData = await res.json();
@@ -210,6 +226,12 @@ export default function AdminProductosPage() {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        router.push("/cuenta/login");
+        return;
+      }
 
       const data = await res.json();
       if (!res.ok) {
@@ -259,6 +281,8 @@ export default function AdminProductosPage() {
       description: formDescription,
       price: priceNum,
       discountPrice: discountPriceNum || null,
+      stock: parseInt(formStock, 10) || 0,
+      lowStockAlert: parseInt(formLowStockAlert, 10) || 2,
       imageUrl: formImageUrl,
       imageUrls: formImageUrls,
       category: formCategory,
@@ -280,6 +304,12 @@ export default function AdminProductosPage() {
         },
         body: JSON.stringify(payload),
       });
+
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        router.push("/cuenta/login");
+        return;
+      }
 
       const data = await res.json();
       if (!res.ok) {
@@ -368,6 +398,9 @@ export default function AdminProductosPage() {
                   <th scope="col" className="px-6 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                     Descuento
                   </th>
+                  <th scope="col" className="px-6 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-text-secondary w-28">
+                    Stock
+                  </th>
                   <th scope="col" className="px-6 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-text-secondary text-center w-24">
                     Disponible
                   </th>
@@ -379,7 +412,7 @@ export default function AdminProductosPage() {
               <tbody className="bg-bg-secondary divide-y divide-divider/30 text-xs">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-text-secondary">
+                    <td colSpan={8} className="px-6 py-12 text-center text-text-secondary">
                       No se han encontrado productos creados. Haz clic en "Nuevo Producto" para agregar el primero.
                     </td>
                   </tr>
@@ -419,6 +452,17 @@ export default function AdminProductosPage() {
                         ) : (
                           <span className="text-text-secondary/50 font-medium">—</span>
                         )}
+                      </td>
+                      <td className="px-6 py-3 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                          (product.stock ?? 0) === 0
+                            ? "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
+                            : (product.stock ?? 0) <= (product.low_stock_alert ?? 2)
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                            : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                        }`}>
+                          {product.stock ?? 0} unid.
+                        </span>
                       </td>
                       <td className="px-6 py-3 text-center">
                         <button
@@ -599,6 +643,44 @@ export default function AdminProductosPage() {
                       onChange={(e) => setFormDiscountPrice(e.target.value)}
                       className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
                     />
+                  </div>
+
+                  {/* Stock field */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
+                      Inventario / Stock Físico (Unidades)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      required
+                      placeholder="Ej. 10"
+                      value={formStock}
+                      onChange={(e) => setFormStock(e.target.value)}
+                      className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
+                    />
+                    <p className="text-[10px] text-text-secondary">
+                      Cantidad de piezas disponibles para compra inmediata.
+                    </p>
+                  </div>
+
+                  {/* Low Stock Alert threshold */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
+                      Alerta de Stock Bajo (Umbral)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      placeholder="Ej. 2 o 3"
+                      value={formLowStockAlert}
+                      onChange={(e) => setFormLowStockAlert(e.target.value)}
+                      className="w-full rounded-md border border-divider bg-white py-2 px-3 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
+                    />
+                    <p className="text-[10px] text-text-secondary">
+                      Dispara el distintivo "¡Solo quedan X!" en la tienda.
+                    </p>
                   </div>
 
                   {/* Image Upload Drag & Drop Zone */}

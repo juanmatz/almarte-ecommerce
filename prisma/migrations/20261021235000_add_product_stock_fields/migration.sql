@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `products` ADD COLUMN `low_stock_alert` INTEGER NOT NULL DEFAULT 2,
+    ADD COLUMN `stock` INTEGER NOT NULL DEFAULT 0;

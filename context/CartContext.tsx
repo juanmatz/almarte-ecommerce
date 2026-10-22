@@ -9,6 +9,8 @@ export interface Product {
   price: number;
   discount_price?: number;
   is_available: boolean;
+  stock?: number;
+  low_stock_alert?: number;
   image_url: string;
   image_urls?: string[];
   category: string;
@@ -64,16 +66,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = () => setIsOpen(false);
 
   const addToCart = (product: Product, quantity = 1) => {
+    // Si no está disponible o el stock es 0, no añadir
+    if (!product.is_available || (product.stock !== undefined && product.stock <= 0)) {
+      return;
+    }
+
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.product.id === product.id);
+      const maxStock = product.stock !== undefined ? product.stock : 99;
+
       if (existingItem) {
+        const newQty = Math.min(existingItem.quantity + quantity, maxStock);
         return prevItems.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQty }
             : item
         );
       }
-      return [...prevItems, { product, quantity }];
+      return [...prevItems, { product, quantity: Math.min(quantity, maxStock) }];
     });
     setIsOpen(true); // Auto-open cart drawer when adding an item
   };
@@ -88,9 +98,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
+      prevItems.map((item) => {
+        if (item.product.id === productId) {
+          const maxStock = item.product.stock !== undefined ? item.product.stock : 99;
+          return { ...item, quantity: Math.min(quantity, maxStock) };
+        }
+        return item;
+      })
     );
   };
 

@@ -18,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "skills/security-and-hardening/SKILL.md",
       "computedHash": "32a1243d6eb45fd342c1f4e9f9ee5f1651a1e9fdccb86dcbbbee5d6f455ed362"
+    },
+    "wompi": {
+      "source": "noxai-co/wompi-skills",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "d0ec0437f35d15a09d481036d135e25c919d666a3ea5d759d110b04b493f2b82"
     }
   }
 }

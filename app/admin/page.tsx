@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { DollarSign, ShoppingBag, Box, Truck, ArrowUpRight, ClipboardList, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -52,7 +53,8 @@ interface DashboardMetrics {
 }
 
 export default function AdminDashboard() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,11 @@ export default function AdminDashboard() {
             Authorization: `Bearer ${token}`,
           },
         });
+        if (res.status === 401 || res.status === 403) {
+          logout();
+          router.push("/cuenta/login");
+          return;
+        }
         if (!res.ok) {
           throw new Error("No se pudieron cargar las estadísticas.");
         }
@@ -80,7 +87,7 @@ export default function AdminDashboard() {
     };
 
     fetchMetrics();
-  }, [token]);
+  }, [token, logout, router]);
 
 
 

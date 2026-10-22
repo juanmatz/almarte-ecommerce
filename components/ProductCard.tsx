@@ -45,6 +45,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             isAvailable={product.is_available}
             price={product.price}
             discountPrice={product.discount_price}
+            stock={product.stock}
+            lowStockAlert={product.low_stock_alert}
           />
         </div>
       </div>
@@ -84,13 +86,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           <button
             onClick={handleAddToCart}
-            disabled={!product.is_available}
+            disabled={!product.is_available || (product.stock !== undefined && product.stock <= 0)}
             className={`p-2 rounded-full transition duration-200 ${
-              product.is_available
+              product.is_available && (product.stock === undefined || product.stock > 0)
                 ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95 cursor-pointer"
                 : "bg-divider text-text-secondary cursor-not-allowed"
             }`}
-            aria-label={product.is_available ? "Agregar al carrito" : "Agotado"}
+            aria-label={product.is_available && (product.stock === undefined || product.stock > 0) ? "Agregar al carrito" : "Agotado"}
           >
             <ShoppingCart className="h-4 w-4" />
           </button>

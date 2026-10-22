@@ -45,7 +45,7 @@ interface Order {
 }
 
 export default function AdminOrdenesPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -95,6 +95,11 @@ export default function AdminOrdenesPage() {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        router.push("/cuenta/login");
+        return;
+      }
       if (!res.ok) throw new Error("No se pudo cargar el listado de órdenes.");
       const data = await res.json();
       setOrders(data);

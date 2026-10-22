@@ -98,6 +98,8 @@ El proyecto cuenta con skills instaladas localmente en `.agents/skills/`. El age
 | **`design-doc-mermaid`** | [.agents/skills/design-doc-mermaid/SKILL.md](file:///.agents/skills/design-doc-mermaid/SKILL.md) | Siempre que se diseñe o documente un flujo secuencial, arquitectura de componentes, estados de pedido o modelos relacionales. |
 | **`security-and-hardening`** | [.agents/skills/security-and-hardening/SKILL.md](file:///.agents/skills/security-and-hardening/SKILL.md) | En toda tarea que toque autenticación, middleware, endpoints API, validación de inputs, pagos, cookies o cabeceras HTTP. |
 | **`noodles`** | [.agents/skills/noodles/SKILL.md](file:///.agents/skills/noodles/SKILL.md) | Para mapeo de dependencias, visualización de árboles de llamadas y análisis de ejecución en refactors complejos. |
+| **`ponytail`** | [.agents/skills/ponytail/SKILL.md](file:///.agents/skills/ponytail/SKILL.md) | Modo senior minimalista (YAGNI): buscar siempre la solución más simple y pequeña que resuelva el problema completo sin sobre-ingeniería ni dependencias superfluas. Activado al invocar `ponytail`, `lite`, `ultra` o solicitar minimalismo. |
+| **`ponytail-review` / `audit` / `debt`** | [.agents/skills/ponytail-review/SKILL.md](file:///.agents/skills/ponytail-review/SKILL.md) | Para revisiones de PRs/diffs enfocadas en código magro y seguro (`review`), auditorías de deuda técnica/código muerto (`audit`), o inventario de atajos temporales (`debt`). |
 
 ---
 

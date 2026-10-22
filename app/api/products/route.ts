@@ -114,6 +114,8 @@ export async function GET(request: Request) {
         price: Number(p.price),
         discount_price: p.discountPrice ? Number(p.discountPrice) : undefined,
         is_available: p.isAvailable,
+        stock: p.stock,
+        low_stock_alert: p.lowStockAlert,
         image_url: p.imageUrl,
         image_urls: [p.imageUrl, ...p.images.map((image) => image.url)],
         category: p.category,

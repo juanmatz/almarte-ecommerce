@@ -5,8 +5,13 @@ import { verifyJWT } from "./lib/auth";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The Stripe webhook and guest checkout endpoints must be public
-  if (pathname === "/api/checkout/webhook" || pathname === "/api/checkout/guest-intent") {
+  // The webhooks, guest checkout and payment verification endpoints must be public
+  if (
+    pathname === "/api/checkout/webhook" ||
+    pathname === "/api/checkout/guest-intent" ||
+    pathname.startsWith("/api/checkout/wompi/verify") ||
+    pathname.startsWith("/api/webhooks")
+  ) {
     return NextResponse.next();
   }
 
@@ -27,12 +32,19 @@ export async function middleware(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    const secret = process.env.JWT_SECRET || "almarte-default-jwt-super-secret-key-change-in-env-2026";
-    
     if (!token) {
       return NextResponse.json(
         { error: "Acceso no autorizado. Token faltante." },
         { status: 401 }
+      );
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("ERROR FATAL DE SEGURIDAD: JWT_SECRET no está configurada en las variables de entorno.");
+      return NextResponse.json(
+        { error: "Error de configuración de seguridad en el servidor." },
+        { status: 500 }
       );
     }
 

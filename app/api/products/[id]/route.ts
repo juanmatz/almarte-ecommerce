@@ -65,6 +65,8 @@ export async function GET(
       price: Number(product.price),
       discount_price: product.discountPrice ? Number(product.discountPrice) : undefined,
       is_available: product.isAvailable,
+      stock: product.stock,
+      low_stock_alert: product.lowStockAlert,
       image_url: product.imageUrl,
       image_urls: [product.imageUrl, ...product.images.map((image) => image.url)],
       category: product.category,
@@ -209,7 +211,13 @@ export async function POST(
     };
 
     return NextResponse.json(formattedReview, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        { error: "Ya has dejado una valoración para este producto." },
+        { status: 400 }
+      );
+    }
     console.error("Error al crear reseña:", error);
     return NextResponse.json(
       { error: "Error interno al guardar la valoración" },

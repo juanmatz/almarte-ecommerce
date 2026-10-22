@@ -70,7 +70,13 @@ export async function verifyJWT(token: string, secret: string): Promise<JWTPaylo
   }
 }
 
-export const JWT_SECRET = process.env.JWT_SECRET || "almarte-default-jwt-super-secret-key-change-in-env-2026";
+export function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("ERROR FATAL DE SEGURIDAD: JWT_SECRET no está configurada en las variables de entorno.");
+  }
+  return secret;
+}
 
 // Helper to authenticate user from request headers
 export async function getAuthUser(request: Request): Promise<JWTPayload | null> {
@@ -80,11 +86,10 @@ export async function getAuthUser(request: Request): Promise<JWTPayload | null> 
   }
 
   const token = authHeader.split(" ")[1];
-  const secret = process.env.JWT_SECRET || JWT_SECRET;
-  
-  if (!token || !secret) {
+  if (!token) {
     return null;
   }
 
+  const secret = getJwtSecret();
   return await verifyJWT(token, secret);
 }

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { ShoppingBag, CreditCard, ChevronRight, User, Mail, MapPin, Phone, ShieldAlert, Loader2, Sparkles, CheckCircle2, Key, Truck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { formatCOP } from "@/lib/currency";
 
 export default function CheckoutPage() {
@@ -21,6 +22,9 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+
+  // Payment Method Selection
+  const [paymentMethod, setPaymentMethod] = useState<"wompi" | "manual">("wompi");
 
   // UI state
   const [showLogin, setShowLogin] = useState(false);
@@ -101,9 +105,68 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Ocurrió un error al procesar tu pedido.");
       }
 
-      // Success
+      // Si seleccionó Wompi y el servidor devolvió los parámetros criptográficos
+      if (paymentMethod === "wompi" && data.publicKey && data.signature) {
+        // 1. Si el SDK de Wompi está cargado en ventana, abrir el Widget modal interactivo
+        if (typeof window !== "undefined" && (window as any).WidgetCheckout) {
+          try {
+            const checkout = new (window as any).WidgetCheckout({
+              currency: data.currency || "COP",
+              amountInCents: data.amountInCents,
+              reference: data.reference,
+              publicKey: data.publicKey,
+              signature: {
+                integrity: data.signature,
+              },
+              redirectUrl: data.redirectUrl,
+              customerData: {
+                email: email.trim(),
+                fullName: name.trim(),
+                phoneNumber: phone.trim(),
+                phoneNumberPrefix: "+57",
+                legalId: documentId.trim(),
+                legalIdType: "CC",
+              },
+              shippingAddress: {
+                addressLine1: address.trim(),
+                city: city.trim(),
+                phoneNumber: phone.trim(),
+                region: "Colombia",
+                country: "CO",
+              },
+            });
+
+            clearCart();
+            setCheckoutSubmitting(false);
+
+            checkout.open((result: any) => {
+              const transaction = result?.transaction;
+              window.location.href = `${data.redirectUrl}&id=${transaction?.id || ""}`;
+            });
+            return;
+          } catch (widgetErr) {
+            console.warn("Fallo al inicializar WidgetCheckout modal, usando redirección web:", widgetErr);
+          }
+        }
+
+        // 2. Fallback: Redirección directa al Web Checkout oficial de Wompi
+        clearCart();
+        const queryParams = new URLSearchParams({
+          "public-key": data.publicKey,
+          currency: data.currency || "COP",
+          "amount-in-cents": String(data.amountInCents),
+          reference: data.reference,
+          "signature:integrity": data.signature,
+          "redirect-url": data.redirectUrl,
+        });
+
+        window.location.href = `${data.checkoutUrl || "https://checkout.wompi.co/p/"}?${queryParams.toString()}`;
+        return;
+      }
+
+      // Flujo de transferencia manual tradicional
       setCreatedOrder({ id: data.orderId, total: data.total });
-      clearCart(); // Clear the client-side cart
+      clearCart();
     } catch (err: any) {
       console.error(err);
       setCheckoutError(err.message || "Error al conectar con el servidor.");
@@ -465,6 +528,65 @@ export default function CheckoutPage() {
 
                 </div>
 
+                {/* Selector de Método de Pago */}
+                <div className="pt-5 border-t border-divider/40 space-y-3">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-text-primary/95">
+                    Método de Pago
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Opción 1: Wompi Bancolombia */}
+                    <div
+                      onClick={() => setPaymentMethod("wompi")}
+                      className={`relative rounded-lg border p-3.5 cursor-pointer transition flex flex-col justify-between ${
+                        paymentMethod === "wompi"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-divider/70 bg-white hover:border-divider"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-primary" />
+                          <span className="font-serif text-xs font-bold text-title">
+                            Wompi Bancolombia
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                          Automático
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-text-secondary mt-2 leading-relaxed">
+                        Paga de inmediato con Bancolombia (Botón/QR), Nequi, PSE (todos los bancos) o Tarjetas Débito y Crédito.
+                      </p>
+                    </div>
+
+                    {/* Opción 2: Transferencia Manual */}
+                    <div
+                      onClick={() => setPaymentMethod("manual")}
+                      className={`relative rounded-lg border p-3.5 cursor-pointer transition flex flex-col justify-between ${
+                        paymentMethod === "manual"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-divider/70 bg-white hover:border-divider"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-text-secondary" />
+                          <span className="font-serif text-xs font-bold text-title">
+                            Transferencia Manual
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded">
+                          WhatsApp
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-text-secondary mt-2 leading-relaxed">
+                        Transfiere desde tu app bancaria y envía el comprobante por WhatsApp para verificación manual.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="pt-6">
                   <button
                     type="submit"
@@ -478,7 +600,9 @@ export default function CheckoutPage() {
                       </>
                     ) : (
                       <>
-                        Confirmar e Ir al Pago
+                        {paymentMethod === "wompi"
+                          ? "Continuar al Pago Seguro con Wompi"
+                          : "Confirmar Pedido y Ver Cuentas"}
                         <ChevronRight className="h-4 w-4" />
                       </>
                     )}
@@ -562,6 +686,10 @@ export default function CheckoutPage() {
         </div>
       </main>
       <Footer />
+      <Script
+        src="https://checkout.wompi.co/widget.js"
+        strategy="lazyOnload"
+      />
     </>
   );
 }
